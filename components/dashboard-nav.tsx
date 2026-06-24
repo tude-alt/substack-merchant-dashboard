@@ -10,7 +10,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react"
-import { Logo, SubStackMark } from "@/components/logo"
+import { Logo, SubflowMark } from "@/components/logo"
 import { signOut } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
@@ -141,4 +141,4 @@ export function BottomNav() {
   )
 }
 
-export { SubStackMark }
+export { SubflowMark }

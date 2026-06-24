@@ -68,7 +68,6 @@ export function OnboardingWizard({
   const [category, setCategory] = useState(initialCategory || "Fintech")
 
   // Step 2
-  const [nombaKey, setNombaKey] = useState("")
   const [nombaConnected, setNombaConnected] = useState(initialNomba)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<"ok" | "fail" | null>(
@@ -98,8 +97,11 @@ export function OnboardingWizard({
   async function handleTestNomba() {
     setError(null)
     setTesting(true)
-    const { ok } = await connectNomba(nombaKey)
+    const { ok, error } = await connectNomba()
     setTesting(false)
+    if (!ok) {
+      setError(error || "Connection failed. Check your Nomba credentials in environment variables.")
+    }
     setTestResult(ok ? "ok" : "fail")
     setNombaConnected(ok)
   }
@@ -227,37 +229,33 @@ export function OnboardingWizard({
                 Connect Nomba
               </h2>
               <p className="text-sm text-muted-foreground">
-                Paste your Nomba API key so SubStack can process charges. Test
-                keys start with{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                  nomba_
-                </code>
-                .
+                Subflow connects to Nomba using your configured API credentials to
+                process charges and handle retries. Your credentials are securely
+                stored in environment variables.
               </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="nomba">Nomba API key</Label>
-              <Input
-                id="nomba"
-                placeholder="nomba_live_xxxxxxxxxxxx"
-                value={nombaKey}
-                onChange={(e) => {
-                  setNombaKey(e.target.value)
-                  setTestResult(null)
-                }}
-              />
+
+            <div className="rounded-lg border border-border bg-accent p-3">
+              <p className="text-sm text-muted-foreground">
+                To continue, ensure your Nomba credentials are set:
+                <ul className="mt-2 space-y-1 ml-4 list-disc">
+                  <li><code className="text-xs bg-muted rounded px-1">NOMBA_CLIENT_ID</code></li>
+                  <li><code className="text-xs bg-muted rounded px-1">NOMBA_PRIVATE_KEY</code></li>
+                  <li><code className="text-xs bg-muted rounded px-1">NOMBA_ACCOUNT_ID</code></li>
+                </ul>
+              </p>
             </div>
 
             {testResult === "ok" && (
               <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-sm text-success">
                 <CheckCircle2 className="h-4 w-4" />
-                Connection successful — Nomba is linked.
+                Connection successful — Nomba is configured and linked.
               </div>
             )}
             {testResult === "fail" && (
               <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" />
-                Could not connect. Check the key and try again.
+                Could not connect. Verify your Nomba credentials.
               </div>
             )}
 
@@ -265,7 +263,7 @@ export function OnboardingWizard({
               <Button
                 variant="secondary"
                 onClick={handleTestNomba}
-                disabled={testing || !nombaKey.trim()}
+                disabled={testing}
               >
                 {testing ? "Testing…" : "Test connection"}
               </Button>

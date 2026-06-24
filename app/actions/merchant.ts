@@ -50,18 +50,74 @@ export async function saveBusinessInfo(input: {
   revalidatePath("/onboarding")
 }
 
-export async function connectNomba(apiKey: string) {
+/**
+ * Get the active Nomba credentials (test or live) from environment variables.
+ * Prefer live if available; fall back to test.
+ * This is not a server action, just a helper function.
+ */
+function getNombaCredentials() {
+  // Check for live credentials first
+  if (
+    process.env.NOMBA_CLIENT_ID &&
+    process.env.NOMBA_PRIVATE_KEY &&
+    process.env.NOMBA_ACCOUNT_ID
+  ) {
+    return {
+      clientId: process.env.NOMBA_CLIENT_ID,
+      privateKey: process.env.NOMBA_PRIVATE_KEY,
+      accountId: process.env.NOMBA_ACCOUNT_ID,
+      mode: "live" as const,
+    }
+  }
+
+  // Fall back to test credentials
+  if (
+    process.env.NOMBA_TEST_CLIENT_ID &&
+    process.env.NOMBA_TEST_PRIVATE_KEY &&
+    process.env.NOMBA_TEST_ACCOUNT_ID
+  ) {
+    return {
+      clientId: process.env.NOMBA_TEST_CLIENT_ID,
+      privateKey: process.env.NOMBA_TEST_PRIVATE_KEY,
+      accountId: process.env.NOMBA_TEST_ACCOUNT_ID,
+      mode: "test" as const,
+    }
+  }
+
+  return null
+}
+
+export async function connectNomba() {
   const userId = await getUserId()
   await getMerchant()
-  // Simulated connection test: keys starting with "nomba_" succeed.
-  const ok = apiKey.trim().toLowerCase().startsWith("nomba_") && apiKey.length >= 12
-  if (ok) {
-    await db
-      .update(merchant)
-      .set({ nombaApiKey: apiKey, nombaConnected: true })
-      .where(eq(merchant.userId, userId))
+
+  const nomba = getNombaCredentials()
+  if (!nomba) {
+    return { ok: false, error: "Nomba credentials not configured." }
   }
-  return { ok }
+
+  // Verify credentials by attempting a simple API call
+  try {
+    const response = await fetch("https://api.nomba.com/v1/health", {
+      method: "GET",
+      headers: {
+        "X-API-Key": nomba.privateKey,
+        "Content-Type": "application/json",
+      },
+    })
+
+    const ok = response.ok
+    if (ok) {
+      await db
+        .update(merchant)
+        .set({ nombaConnected: true })
+        .where(eq(merchant.userId, userId))
+    }
+    return { ok }
+  } catch (error) {
+    console.error("[v0] Nomba connection failed:", error)
+    return { ok: false, error: "Connection failed. Check your credentials." }
+  }
 }
 
 export async function completeOnboarding() {

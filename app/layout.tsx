@@ -6,15 +6,15 @@ import './globals.css'
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'SubStack — Billing Infrastructure for African SaaS',
+  title: 'Subflow — African SaaS Recurring Billing',
   description:
-    'SubStack is recurring billing infrastructure for African SaaS. Manage subscriptions, plans, retries, and revenue in one merchant dashboard.',
+    'Subflow is recurring billing infrastructure for African SaaS. Manage subscriptions, plans, retries, and revenue in one merchant dashboard.',
   generator: 'v0.app',
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'dark',
-  themeColor: '#0a0f1e',
+  colorScheme: 'light',
+  themeColor: '#4f46e5',
 }
 
 export default function RootLayout({

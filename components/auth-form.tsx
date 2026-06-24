@@ -60,12 +60,12 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-6 space-y-1.5 text-center">
           <h1 className="text-xl font-semibold tracking-tight text-card-foreground">
-            {isSignUp ? "Create your merchant account" : "Sign in to SubStack"}
+            {isSignUp ? "Create your merchant account" : "Sign in to Subflow"}
           </h1>
           <p className="text-sm text-muted-foreground text-pretty">
             {isSignUp
-              ? "Start billing your African SaaS customers."
-              : "Billing infrastructure for African SaaS."}
+              ? "Start recurring billing for your SaaS customers."
+              : "African SaaS recurring billing infrastructure."}
           </p>
         </div>
 
@@ -145,7 +145,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           </>
         ) : (
           <>
-            New to SubStack?{" "}
+            New to Subflow?{" "}
             <Link
               href="/signup"
               className="font-medium text-primary hover:underline"

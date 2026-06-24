@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-export function SubStackMark({ className }: { className?: string }) {
+export function SubflowMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 32 32"
@@ -39,10 +39,10 @@ export function Logo({
 }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <SubStackMark />
+      <SubflowMark />
       {showWordmark && (
         <span className="text-lg font-semibold tracking-tight text-foreground">
-          SubStack
+          Subflow
         </span>
       )}
     </div>
