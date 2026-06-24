@@ -64,8 +64,8 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           </h1>
           <p className="text-sm text-muted-foreground text-pretty">
             {isSignUp
-              ? "Start recurring billing for your SaaS customers."
-              : "African SaaS recurring billing infrastructure."}
+              ? "Start recurring billing for your Nigerian SaaS."
+              : "Nigerian SaaS recurring billing infrastructure."}
           </p>
         </div>
 

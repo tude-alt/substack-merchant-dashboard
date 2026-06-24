@@ -6,9 +6,9 @@ import './globals.css'
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Subflow — African SaaS Recurring Billing',
+  title: 'Subflow — Nigerian SaaS Recurring Billing',
   description:
-    'Subflow is recurring billing infrastructure for African SaaS. Manage subscriptions, plans, retries, and revenue in one merchant dashboard.',
+    'Subflow is recurring billing infrastructure for Nigerian SaaS. Manage subscriptions, plans, retries, and revenue in one merchant dashboard.',
   generator: 'v0.app',
 }
 
