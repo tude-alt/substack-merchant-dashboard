@@ -72,11 +72,17 @@ export function RevenueChart({ data }: { data: Point[] }) {
               minTickGap={24}
             />
             <YAxis
-              tickFormatter={(v) => `₦${Math.round(v / 100000) / 10}m`}
+              tickFormatter={(v) => {
+                // v is in kobo; convert to naira and show compact.
+                const naira = v / 100
+                if (naira >= 1_000_000) return `₦${(naira / 1_000_000).toFixed(1)}m`
+                if (naira >= 1_000) return `₦${Math.round(naira / 1000)}k`
+                return `₦${naira}`
+              }}
               tick={{ fill: "#94a3b8", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              width={48}
+              width={52}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area

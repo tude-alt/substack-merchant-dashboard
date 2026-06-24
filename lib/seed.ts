@@ -174,6 +174,31 @@ export async function seedMerchantData(userId: string) {
     }
   })
 
+  // Spread a realistic stream of successful charges across the last 30 days so
+  // the revenue chart shows a continuous curve rather than isolated spikes.
+  const dailyNames = insertedSubs.filter((_, i) => SEED_SUBS[i].status !== "cancelled")
+  for (let day = 29; day >= 0; day--) {
+    // 1-3 charges per day, weighted by a gentle upward trend.
+    const chargesToday = 1 + ((day * 7 + 3) % 3)
+    for (let k = 0; k < chargesToday; k++) {
+      const sub = dailyNames[(day * 3 + k) % dailyNames.length]
+      const p = insertedPlans.find((pp) => pp.id === sub.planId)!
+      txns.push({
+        userId,
+        subscriberId: sub.id,
+        customerName: sub.name,
+        planName: sub.planName,
+        amount: Math.round(p.amount / (p.interval === "annual" ? 12 : p.interval === "quarterly" ? 3 : 1)),
+        status: "successful",
+        nombaRef: ref(),
+        failureReason: null,
+        retryCount: 0,
+        nextRetryDate: null,
+        createdAt: daysAgo(day),
+      })
+    }
+  }
+
   await db.insert(transaction).values(txns)
 
   // Activity feed (most recent first via createdAt).

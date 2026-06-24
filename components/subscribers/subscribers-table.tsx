@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { Fragment, useState, useTransition } from "react"
 import { Card } from "@/components/ui/card"
 import {
   Table,
@@ -152,9 +152,8 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
             {subscribers.map((s) => {
               const isOpen = expanded === s.id
               return (
-                <>
+                <Fragment key={s.id}>
                   <TableRow
-                    key={s.id}
                     onClick={() => toggle(s.id)}
                     className="cursor-pointer hover:bg-accent/40"
                     data-state={isOpen ? "open" : undefined}
@@ -212,7 +211,7 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               )
             })}
           </TableBody>
