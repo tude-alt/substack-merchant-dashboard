@@ -79,15 +79,23 @@ export function OnboardingWizard({
   const [planForm, setPlanForm] = useState<PlanFormState>(emptyPlanForm)
 
   async function handleStep1() {
+    console.log("[v0] handleStep1 clicked", { businessName, category })
     if (!businessName.trim()) {
       setError("Please enter your business name.")
       return
     }
     setError(null)
     setLoading(true)
-    await saveBusinessInfo({ businessName: businessName.trim(), category })
-    setLoading(false)
-    setStep(2)
+    try {
+      await saveBusinessInfo({ businessName: businessName.trim(), category })
+      console.log("[v0] saveBusinessInfo done")
+      setStep(2)
+    } catch (err) {
+      console.log("[v0] saveBusinessInfo error", err)
+      setError("Could not save your business info. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleTestNomba() {
