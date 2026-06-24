@@ -20,7 +20,6 @@ export default async function OnboardingPage() {
         <OnboardingWizard
           initialBusinessName={merchant.businessName}
           initialCategory={merchant.category}
-          nombaConnected={merchant.nombaConnected}
         />
       </div>
     </main>

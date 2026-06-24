@@ -20,7 +20,6 @@ import {
 } from "@/components/plan-form-fields"
 import {
   saveBusinessInfo,
-  connectNomba,
   completeOnboarding,
 } from "@/app/actions/merchant"
 import { createPlan } from "@/app/actions/plans"
@@ -28,7 +27,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Building2,
-  Plug,
   Layers,
 } from "lucide-react"
 
@@ -45,18 +43,15 @@ const CATEGORIES = [
 
 const STEPS = [
   { id: 1, label: "Business", icon: Building2 },
-  { id: 2, label: "Connect Nomba", icon: Plug },
-  { id: 3, label: "First plan", icon: Layers },
+  { id: 2, label: "First plan", icon: Layers },
 ]
 
 export function OnboardingWizard({
   initialBusinessName,
   initialCategory,
-  nombaConnected: initialNomba,
 }: {
   initialBusinessName: string
   initialCategory: string
-  nombaConnected: boolean
 }) {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -68,13 +63,6 @@ export function OnboardingWizard({
   const [category, setCategory] = useState(initialCategory || "Fintech")
 
   // Step 2
-  const [nombaConnected, setNombaConnected] = useState(initialNomba)
-  const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState<"ok" | "fail" | null>(
-    initialNomba ? "ok" : null,
-  )
-
-  // Step 3
   const [planForm, setPlanForm] = useState<PlanFormState>(emptyPlanForm)
 
   async function handleStep1() {
@@ -92,18 +80,6 @@ export function OnboardingWizard({
     } finally {
       setLoading(false)
     }
-  }
-
-  async function handleTestNomba() {
-    setError(null)
-    setTesting(true)
-    const { ok, error } = await connectNomba()
-    setTesting(false)
-    if (!ok) {
-      setError(error || "Connection failed. Check your Nomba credentials in environment variables.")
-    }
-    setTestResult(ok ? "ok" : "fail")
-    setNombaConnected(ok)
   }
 
   async function handleFinish() {
@@ -226,68 +202,6 @@ export function OnboardingWizard({
           <div className="space-y-5">
             <div className="space-y-1">
               <h2 className="text-lg font-semibold text-card-foreground">
-                Connect Nomba
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Subflow connects to Nomba using your configured API credentials to
-                process charges and handle retries. Your credentials are securely
-                stored in environment variables.
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-border bg-accent p-3">
-              <p className="text-sm text-muted-foreground">
-                To continue, ensure your Nomba credentials are set:
-                <ul className="mt-2 space-y-1 ml-4 list-disc">
-                  <li><code className="text-xs bg-muted rounded px-1">NOMBA_CLIENT_ID</code></li>
-                  <li><code className="text-xs bg-muted rounded px-1">NOMBA_PRIVATE_KEY</code></li>
-                  <li><code className="text-xs bg-muted rounded px-1">NOMBA_ACCOUNT_ID</code></li>
-                </ul>
-              </p>
-            </div>
-
-            {testResult === "ok" && (
-              <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-sm text-success">
-                <CheckCircle2 className="h-4 w-4" />
-                Connection successful — Nomba is configured and linked.
-              </div>
-            )}
-            {testResult === "fail" && (
-              <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                Could not connect. Verify your Nomba credentials.
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                onClick={handleTestNomba}
-                disabled={testing}
-              >
-                {testing ? "Testing…" : "Test connection"}
-              </Button>
-              <Button
-                onClick={() => setStep(3)}
-                disabled={!nombaConnected}
-                className="flex-1"
-              >
-                Continue
-              </Button>
-            </div>
-            <button
-              onClick={() => setStep(1)}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Back
-            </button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-5">
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold text-card-foreground">
                 Create your first plan
               </h2>
               <p className="text-sm text-muted-foreground">
@@ -298,7 +212,7 @@ export function OnboardingWizard({
             <div className="flex gap-3">
               <Button
                 variant="secondary"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(1)}
                 disabled={loading}
               >
                 Back
