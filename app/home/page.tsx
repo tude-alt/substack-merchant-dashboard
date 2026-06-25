@@ -10,7 +10,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-accent">
       {/* Navigation */}
       <nav className="flex items-center justify-between border-b border-border px-6 py-4 lg:px-12 lg:py-6">
-        <Logo showWordmark={true} />
+        <Link href="/" className="hover:opacity-80 transition-opacity">
+          <Logo showWordmark={true} />
+        </Link>
         <div className="flex items-center gap-8">
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-foreground/60">
             <a href="#features" className="hover:text-foreground transition">Features</a>

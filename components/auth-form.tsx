@@ -54,7 +54,9 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-8 flex justify-center">
-        <Logo />
+        <Link href="/" className="hover:opacity-80 transition-opacity">
+          <Logo />
+        </Link>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
