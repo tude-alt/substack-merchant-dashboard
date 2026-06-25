@@ -36,16 +36,25 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           return
         }
       } else {
-        const { error } = await signIn.email({ email, password })
+        const { error, data } = await signIn.email({ email, password })
         if (error) {
           setError(error.message ?? "Invalid email or password.")
           setLoading(false)
           return
         }
+        // Ensure session is established before redirecting
+        if (!data) {
+          setError("Authentication failed. Please try again.")
+          setLoading(false)
+          return
+        }
       }
+      // Use a small delay to ensure cookies are set, then redirect
+      await new Promise(resolve => setTimeout(resolve, 500))
       router.push("/")
       router.refresh()
-    } catch {
+    } catch (err) {
+      console.error("[v0] Auth error:", err)
       setError("Something went wrong. Please try again.")
       setLoading(false)
     }
