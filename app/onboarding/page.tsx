@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { getMerchant } from "@/app/actions/merchant"
@@ -14,13 +15,14 @@ export default async function OnboardingPage() {
   return (
     <main className="min-h-dvh bg-background">
       <header className="flex h-16 items-center justify-center border-b border-border">
-        <Logo />
+        <Link href="/" className="hover:opacity-80 transition-opacity">
+          <Logo />
+        </Link>
       </header>
       <div className="mx-auto w-full max-w-xl px-4 py-10">
         <OnboardingWizard
           initialBusinessName={merchant.businessName}
           initialCategory={merchant.category}
-          nombaConnected={merchant.nombaConnected}
         />
       </div>
     </main>
