@@ -15,15 +15,19 @@ export const auth = betterAuth({
     autoSignIn: true,
   },
   trustedOrigins: [
-    ...(process.env.V0_RUNTIME_URL ? [process.env.V0_RUNTIME_URL] : []),
-    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    // Production URLs
     ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`]
       : []),
-    // Always trust localhost in development
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    // v0 preview environments
+    ...(process.env.V0_RUNTIME_URL ? [process.env.V0_RUNTIME_URL] : []),
+    // Development & localhost
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    // Fallback for any environment
+    // Hardcode known deployment for guaranteed trust
+    "https://substack-merchant-dashboard.vercel.app",
+    // Fallback for custom domains
     ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
   ],
   session: {
