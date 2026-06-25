@@ -34,16 +34,12 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
   },
-  ...(process.env.NODE_ENV === "development"
-    ? {
-        advanced: {
-          // In dev (v0 preview iframe), force cross-site cookies so the
-          // session cookie is stored by the browser.
-          defaultCookieAttributes: {
-            sameSite: "none" as const,
-            secure: true,
-          },
-        },
-      }
-    : {}),
+  advanced: {
+    defaultCookieAttributes: {
+      // In dev (v0 preview iframe), use sameSite: none for cross-site cookies
+      // In production, use lax for normal same-site protection
+      sameSite: process.env.NODE_ENV === "development" ? ("none" as const) : ("lax" as const),
+      secure: true, // Always HTTPS on production and HTTPS on v0 preview
+    },
+  },
 })
