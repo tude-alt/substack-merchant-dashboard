@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Logo } from '@/components/logo'
+import { Logo, SubflowMark } from '@/components/logo'
 import { ArrowRight, Zap, BarChart3, Lock } from 'lucide-react'
 
 export default function HomePage() {
@@ -35,7 +35,7 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center space-y-8">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent border border-border">
-            <div className="w-2 h-2 rounded-full bg-success" />
+            <SubflowMark className="w-4 h-4 text-success" />
             <span className="text-sm font-medium text-foreground/70">Recurring billing for Nigerian SaaS</span>
           </div>
 
@@ -68,7 +68,15 @@ export default function HomePage() {
       {/* Features Section */}
       <section id="features" className="relative px-6 lg:px-12 py-20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 space-y-4">
+          {/* Decorative logos */}
+          <div className="absolute top-0 left-10 opacity-10">
+            <SubflowMark className="w-32 h-32 text-primary" />
+          </div>
+          <div className="absolute bottom-20 right-10 opacity-10">
+            <SubflowMark className="w-24 h-24 text-primary" />
+          </div>
+          
+          <div className="text-center mb-16 space-y-4 relative z-10">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">Everything you need</h2>
             <p className="text-lg text-foreground/60">Built specifically for Nigerian SaaS businesses</p>
           </div>
@@ -150,7 +158,12 @@ export default function HomePage() {
 
       {/* Pricing teaser */}
       <section id="pricing" className="relative px-6 lg:px-12 py-20 border-t border-border">
-        <div className="max-w-3xl mx-auto text-center space-y-8">
+        {/* Decorative logos */}
+        <div className="absolute top-10 right-5 opacity-10">
+          <SubflowMark className="w-28 h-28 text-primary" />
+        </div>
+        
+        <div className="max-w-3xl mx-auto text-center space-y-8 relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">Simple pricing</h2>
           <p className="text-lg text-foreground/60">
             Pay only for what you use. No setup fees, no hidden charges.
