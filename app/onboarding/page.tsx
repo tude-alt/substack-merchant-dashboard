@@ -10,7 +10,7 @@ export default async function OnboardingPage() {
   if (!session?.user) redirect("/login")
 
   const merchant = await getMerchant()
-  if (merchant.onboardingComplete) redirect("/")
+  if (merchant.onboardingComplete) redirect("/dashboard")
 
   return (
     <main className="min-h-dvh bg-background">

@@ -62,5 +62,5 @@ export async function createPlan(input: PlanInput) {
     retryAttempts: input.retryAttempts,
     retryIntervalDays: input.retryIntervalDays,
   })
-  revalidatePath("/plans")
+  revalidatePath("/dashboard/plans")
 }

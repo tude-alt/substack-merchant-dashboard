@@ -15,15 +15,15 @@ import { signOut } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
 const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/subscribers", label: "Subscribers", icon: Users },
-  { href: "/plans", label: "Plans", icon: Layers },
-  { href: "/transactions", label: "Transactions", icon: Receipt },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/subscribers", label: "Subscribers", icon: Users },
+  { href: "/dashboard/plans", label: "Plans", icon: Layers },
+  { href: "/dashboard/transactions", label: "Transactions", icon: Receipt },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/"
+  if (href === "/dashboard") return pathname === "/dashboard"
   return pathname === href || pathname.startsWith(href + "/")
 }
 

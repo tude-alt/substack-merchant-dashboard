@@ -100,9 +100,9 @@ export async function retryCharge(transactionId: number) {
     message: `Manual retry succeeded for ${tx.customerName} — charge recovered`,
   })
 
-  revalidatePath("/")
-  revalidatePath("/transactions")
-  revalidatePath("/subscribers")
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/transactions")
+  revalidatePath("/dashboard/subscribers")
 }
 
 export async function cancelCharge(transactionId: number) {
@@ -139,7 +139,7 @@ export async function cancelCharge(transactionId: number) {
     message: `Subscription cancelled for ${tx.customerName} after failed charge`,
   })
 
-  revalidatePath("/")
-  revalidatePath("/transactions")
-  revalidatePath("/subscribers")
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/transactions")
+  revalidatePath("/dashboard/subscribers")
 }
