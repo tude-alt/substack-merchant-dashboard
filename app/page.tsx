@@ -1,23 +1,15 @@
-import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import HomePage from './home/page'
+import { redirect } from "next/navigation"
+import { getSession } from "@/lib/session"
+import { MarketingHome } from "@/components/marketing-home"
 
 export default async function RootPage() {
-  try {
-    // Check if user is authenticated
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    })
-    
-    // If authenticated, redirect to dashboard
-    if (session?.user) {
-      redirect('/')
-    }
-  } catch (error) {
-    // If session check fails, user is not authenticated
+  const session = await getSession()
+
+  // Authenticated users go straight to their dashboard
+  if (session?.user) {
+    redirect("/dashboard")
   }
-  
-  // Show the homepage for unauthenticated users
-  return <HomePage />
+
+  // Everyone else sees the public marketing homepage
+  return <MarketingHome />
 }

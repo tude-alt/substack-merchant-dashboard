@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Logo, SubflowMark } from '@/components/logo'
 import { ArrowRight, Zap, BarChart3, Lock } from 'lucide-react'
 
-export default function HomePage() {
+export function MarketingHome() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-accent">
       {/* Navigation */}
@@ -40,12 +40,12 @@ export default function HomePage() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight text-balance">
             Billing infrastructure built for Nigeria
           </h1>
 
           {/* Subheading */}
-          <p className="text-lg md:text-xl text-foreground/60 leading-relaxed">
+          <p className="text-lg md:text-xl text-foreground/60 leading-relaxed text-pretty">
             Manage subscriptions, process recurring payments, and handle retries — all through a single API. Built with Nomba, optimized for Nigerian SaaS.
           </p>
 
@@ -75,7 +75,7 @@ export default function HomePage() {
           <div className="absolute bottom-20 right-10 opacity-10">
             <SubflowMark className="w-24 h-24 text-primary" />
           </div>
-          
+
           <div className="text-center mb-16 space-y-4 relative z-10">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">Everything you need</h2>
             <p className="text-lg text-foreground/60">Built specifically for Nigerian SaaS businesses</p>
@@ -162,7 +162,7 @@ export default function HomePage() {
         <div className="absolute top-10 right-5 opacity-10">
           <SubflowMark className="w-28 h-28 text-primary" />
         </div>
-        
+
         <div className="max-w-3xl mx-auto text-center space-y-8 relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">Simple pricing</h2>
           <p className="text-lg text-foreground/60">

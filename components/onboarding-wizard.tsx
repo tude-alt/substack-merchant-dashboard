@@ -101,7 +101,7 @@ export function OnboardingWizard({
         retryIntervalDays: Number(planForm.retryIntervalDays) || 1,
       })
       await completeOnboarding()
-      router.push("/")
+      router.push("/dashboard")
       router.refresh()
     } catch {
       setError("Could not finish setup. Please try again.")

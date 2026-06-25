@@ -41,6 +41,6 @@ export async function sendTestWebhook() {
     responseTimeMs,
   })
 
-  revalidatePath("/settings")
+  revalidatePath("/dashboard/settings")
   return { ok: statusCode === 200, statusCode, responseTimeMs }
 }

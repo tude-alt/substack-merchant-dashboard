@@ -135,7 +135,7 @@ export async function completeOnboarding() {
     // Seed demo data so the dashboard is populated.
     await seedMerchantData(userId)
   }
-  revalidatePath("/")
+  revalidatePath("/dashboard")
 }
 
 export async function regenerateApiKey(which: "live" | "test") {
@@ -147,7 +147,7 @@ export async function regenerateApiKey(which: "live" | "test") {
     .update(merchant)
     .set(which === "live" ? { liveApiKey: key } : { testApiKey: key })
     .where(eq(merchant.userId, userId))
-  revalidatePath("/settings")
+  revalidatePath("/dashboard/settings")
   return key
 }
 
@@ -161,5 +161,5 @@ export async function saveWebhookConfig(input: {
     .update(merchant)
     .set({ webhookUrl: input.webhookUrl, webhookEvents: input.events.join(",") })
     .where(eq(merchant.userId, userId))
-  revalidatePath("/settings")
+  revalidatePath("/dashboard/settings")
 }

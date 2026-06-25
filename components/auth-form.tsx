@@ -51,7 +51,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       }
       // Use a small delay to ensure cookies are set, then redirect
       await new Promise(resolve => setTimeout(resolve, 500))
-      router.push("/")
+      router.push("/dashboard")
       router.refresh()
     } catch (err) {
       console.error("[v0] Auth error:", err)
