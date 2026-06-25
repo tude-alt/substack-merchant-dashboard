@@ -96,12 +96,14 @@ export async function connectNomba() {
     return { ok: false, error: "Nomba credentials not configured." }
   }
 
-  // Verify credentials by attempting a simple API call
+  // Verify credentials by calling Nomba's API with proper authentication headers.
+  // Using a simple account info endpoint to validate the credentials.
   try {
-    const response = await fetch("https://api.nomba.com/v1/health", {
+    const response = await fetch("https://api.nomba.com/v1/accounts", {
       method: "GET",
       headers: {
-        "X-API-Key": nomba.privateKey,
+        "Authorization": `Bearer ${nomba.privateKey}`,
+        "X-Account-Id": nomba.accountId,
         "Content-Type": "application/json",
       },
     })
@@ -112,11 +114,13 @@ export async function connectNomba() {
         .update(merchant)
         .set({ nombaConnected: true })
         .where(eq(merchant.userId, userId))
+    } else {
+      console.error("[v0] Nomba API error:", response.status, await response.text())
     }
-    return { ok }
+    return { ok, error: !ok ? `API returned ${response.status}` : undefined }
   } catch (error) {
     console.error("[v0] Nomba connection failed:", error)
-    return { ok: false, error: "Connection failed. Check your credentials." }
+    return { ok: false, error: "Connection failed. Verify your credentials are set in environment variables." }
   }
 }
 
