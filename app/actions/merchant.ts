@@ -3,7 +3,6 @@
 import { db } from "@/lib/db"
 import { merchant } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
-import { seedMerchantData } from "@/lib/seed"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -132,8 +131,6 @@ export async function completeOnboarding() {
       .update(merchant)
       .set({ onboardingComplete: true })
       .where(eq(merchant.userId, userId))
-    // Seed demo data so the dashboard is populated.
-    await seedMerchantData(userId)
   }
   revalidatePath("/dashboard")
 }

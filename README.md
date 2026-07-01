@@ -1,33 +1,103 @@
 # substack-merchant-dashboard
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+Substack Merchant Dashboard is an MVP built for the Nomba hackathon. It gives merchants a clean, fast way to manage subscriptions, payments, and webhook-driven commerce workflows from a single dashboard. The experience is intentionally kept virgin at first use so teams can add their own plans, subscribers, transactions, and credentials without any preloaded demo content.
 
-## Built with v0
+## MVP focus
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+This version helps a merchant:
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_MDxYOWkHQ6nxGvq6UvbKDsBesHqh)
+- onboard a business profile and connect payment infrastructure
+- create and manage recurring plans
+- track subscribers and transaction activity
+- review webhook delivery logs and configure events
+- generate API keys for test and live environments
 
-## Getting Started
+## What is different in this MVP?
 
-First, run the development server:
+- No seed data is injected on first login or onboarding.
+- The dashboard starts empty until the merchant adds their own real content.
+- Settings includes a guide for new users explaining how to add keys and start integrating.
+
+## Getting started
+
+1. Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+```
+
+2. Start the development server:
+
+```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open http://localhost:3000 and sign in or create an account.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## First-run experience
 
-## Learn More
+When a new merchant signs up:
 
-To learn more, take a look at the following resources:
+- the workspace starts with no seed plans, subscribers, or transactions
+- the user can complete onboarding and then add their own data manually
+- the Settings screen displays a getting-started guide and API key management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+## API keys
+
+Use the API Keys section in Settings to generate and manage your keys.
+
+- Live key: use for production traffic
+- Test key: use for sandbox or staging work
+
+### Example: Python access
+
+```python
+import os
+import requests
+
+api_key = os.getenv("SUBSTACK_API_KEY", "your-key-here")
+url = "https://your-domain.example.com/api/merchant"
+
+response = requests.get(
+    url,
+    headers={"Authorization": f"Bearer {api_key}"},
+    timeout=10,
+)
+
+print(response.status_code)
+print(response.text)
+```
+
+## Vercel deployment
+
+This project is ready to deploy on Vercel. Every push to the main branch can trigger a fresh deployment automatically when the GitHub repository is connected to Vercel.
+
+### Required environment variables
+
+Add these in your Vercel project settings:
+
+```bash
+DATABASE_URL=postgresql://...
+BETTER_AUTH_SECRET=replace-with-a-long-random-secret
+BETTER_AUTH_URL=https://your-app-name.vercel.app
+NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
+
+# Optional provider credentials
+NOMBA_CLIENT_ID=...
+NOMBA_PRIVATE_KEY=...
+NOMBA_ACCOUNT_ID=...
+NOMBA_TEST_CLIENT_ID=...
+NOMBA_TEST_PRIVATE_KEY=...
+NOMBA_TEST_ACCOUNT_ID=...
+```
+
+### Deployment notes
+
+- Use a PostgreSQL-compatible database for `DATABASE_URL`.
+- Set `BETTER_AUTH_SECRET` to a strong random string.
+- For preview deployments, keep `BETTER_AUTH_URL` aligned with the deployment URL.
+- Once deployed, the app will automatically redeploy on each commit pushed to the connected branch.
+
+## Configuration notes
+
+If you are connecting payment providers or webhooks, make sure your environment variables and webhook URLs are configured before testing live flows.
