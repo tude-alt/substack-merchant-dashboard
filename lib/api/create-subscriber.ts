@@ -89,18 +89,26 @@ export async function createSubscriberForMerchant(
     })
     .returning()
 
+  if (!created) {
+    throw new Error("Subscriber insert did not return a row.")
+  }
+
   await db.insert(activity).values({
     userId: input.userId,
     type: "subscription.created",
     message: `${input.name} subscribed to ${p.name} via API (${input.mode} key) — awaiting first payment`,
   })
 
-  await dispatchMerchantWebhook(input.userId, "subscription.created", {
-    subscriber_id: created.id,
-    email: input.email,
-    plan_id: p.id,
-    amount: p.amount,
-  })
+  try {
+    await dispatchMerchantWebhook(input.userId, "subscription.created", {
+      subscriber_id: created.id,
+      email: input.email,
+      plan_id: p.id,
+      amount: p.amount,
+    })
+  } catch (e) {
+    console.error("[create-subscriber] merchant webhook dispatch failed:", e)
+  }
 
   return { kind: "created", subscriber: created }
 }

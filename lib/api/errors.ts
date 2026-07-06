@@ -44,3 +44,10 @@ export function apiInvalidRequest(
 ) {
   return apiError("invalid_request", message, 400, details)
 }
+
+export function apiInternalError(
+  message = "An unexpected error occurred while processing the request.",
+  details: Record<string, unknown> = {},
+) {
+  return apiError("internal_error", message, 500, details)
+}
