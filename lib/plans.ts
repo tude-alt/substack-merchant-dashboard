@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { plan } from "@/lib/db/schema"
+import { plan, planMetricSnapshot } from "@/lib/db/schema"
 import { and, desc, eq } from "drizzle-orm"
 
 export type PlanInput = {
@@ -16,7 +16,7 @@ export type PlanInput = {
 
 export type PlanRow = typeof plan.$inferSelect
 
-const VALID_INTERVALS = new Set(["monthly", "quarterly", "annual"])
+const VALID_INTERVALS = new Set(["monthly", "weekly", "quarterly", "annual"])
 
 export function formatPlanForApi(p: PlanRow) {
   return {
@@ -92,6 +92,23 @@ export async function createPlanForUser(userId: string, input: PlanInput) {
       successRedirectUrl: (input.successRedirectUrl ?? "").trim(),
     })
     .returning()
+
+  if (!created) {
+    throw new Error("Plan insert did not return a row.")
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  await db
+    .insert(planMetricSnapshot)
+    .values({
+      userId,
+      planId: created.id,
+      snapshotDate: today,
+      mrr: 0,
+      activeSubscribers: 0,
+      monitoringEnabled: true,
+    })
+    .onConflictDoNothing()
 
   return created
 }

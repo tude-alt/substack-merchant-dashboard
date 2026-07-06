@@ -2,7 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { getMerchant } from "@/app/actions/merchant"
-import { OnboardingWizard } from "@/components/onboarding-wizard"
+import { SetupWizard } from "@/components/setup-wizard"
 import { Logo } from "@/components/logo"
 
 export default async function OnboardingPage() {
@@ -22,13 +22,14 @@ export default async function OnboardingPage() {
       <div className="mx-auto w-full max-w-xl space-y-8 px-4 py-10">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
-            Set up your workspace
+            Set up Subflow in minutes
           </h1>
           <p className="text-sm text-muted-foreground text-pretty">
-            Two quick steps before you can start billing customers with Subflow.
+            Answer a few questions — we&apos;ll create your plans, API keys, and monitoring
+            automatically.
           </p>
         </div>
-        <OnboardingWizard
+        <SetupWizard
           initialBusinessName={merchant.businessName}
           initialCategory={merchant.category}
         />

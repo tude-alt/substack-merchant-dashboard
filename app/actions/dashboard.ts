@@ -3,6 +3,12 @@
 import { db } from "@/lib/db"
 import { subscriber, transaction, activity } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
+import {
+  buildMonitoringAlerts,
+  getPlanMonitoring,
+  type MonitoringAlert,
+  type PlanMonitoringRow,
+} from "@/lib/monitoring"
 import { and, desc, eq, gte, sql } from "drizzle-orm"
 
 export type DashboardData = {
@@ -12,6 +18,8 @@ export type DashboardData = {
   churnRate: number
   revenueSeries: { date: string; revenue: number }[]
   activity: { id: number; type: string; message: string; createdAt: Date }[]
+  planMonitoring: PlanMonitoringRow[]
+  monitoringAlerts: MonitoringAlert[]
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -93,6 +101,9 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const churnRate = total > 0 ? (cancelled / total) * 100 : 0
 
+  const planMonitoring = await getPlanMonitoring(userId)
+  const monitoringAlerts = buildMonitoringAlerts(planMonitoring)
+
   return {
     mrr: Number(mrrRow?.mrr ?? 0),
     activeSubscribers: active,
@@ -100,5 +111,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     churnRate,
     revenueSeries,
     activity: recentActivity,
+    planMonitoring,
+    monitoringAlerts,
   }
 }
