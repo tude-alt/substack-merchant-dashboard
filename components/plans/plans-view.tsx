@@ -38,6 +38,7 @@ type PlanCard = {
   interval: string
   subscriberCount: number
   totalMrr: number
+  checkoutUrl: string
 }
 
 const INTERVAL_LABEL: Record<string, string> = {
@@ -46,16 +47,16 @@ const INTERVAL_LABEL: Record<string, string> = {
   annual: "Annual",
 }
 
-function CopyPlanIdButton({ planId }: { planId: number }) {
+function CopyTextButton({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <Button
       type="button"
       variant="outline"
       size="icon"
-      aria-label="Copy plan ID"
+      aria-label={label}
       onClick={() => {
-        navigator.clipboard.writeText(String(planId))
+        navigator.clipboard.writeText(text)
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       }}
@@ -63,6 +64,10 @@ function CopyPlanIdButton({ planId }: { planId: number }) {
       {copied ? <Check className="h-4 w-4 text-[var(--success)]" /> : <Copy className="h-4 w-4" />}
     </Button>
   )
+}
+
+function CopyPlanIdButton({ planId }: { planId: number }) {
+  return <CopyTextButton text={String(planId)} label="Copy plan ID" />
 }
 
 export function PlansView({ plans }: { plans: PlanCard[] }) {
@@ -89,6 +94,7 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
         trialDays: Number(form.trialDays) || 0,
         retryAttempts: Number(form.retryAttempts) || 0,
         retryIntervalDays: Number(form.retryIntervalDays) || 1,
+        successRedirectUrl: form.successRedirectUrl.trim(),
       })
       setForm(emptyPlanForm)
       setOpen(false)
@@ -102,7 +108,7 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
       <div className="space-y-6">
         <PageHeader
           title="Plans"
-          description="Billing plans your customers can subscribe to. Use the plan ID in your API integration."
+          description="Billing plans your customers can subscribe to. Share a checkout link — no code required — or use the plan ID in your API integration."
           action={
             <Button onClick={() => setOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -146,6 +152,7 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
                     <TableRow>
                       <TableHead className="w-[100px]">Plan ID</TableHead>
                       <TableHead>Name</TableHead>
+                      <TableHead>Checkout link</TableHead>
                       <TableHead>Interval</TableHead>
                       <TableHead>Price</TableHead>
                       <TableHead>Active subs</TableHead>
@@ -172,6 +179,17 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
                               </p>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex max-w-xs items-center gap-2">
+                            <code className="truncate font-mono text-xs text-muted-foreground">
+                              {p.checkoutUrl}
+                            </code>
+                            <CopyTextButton text={p.checkoutUrl} label="Copy checkout link" />
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Share this link or embed it — no code required
+                          </p>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {INTERVAL_LABEL[p.interval] ?? p.interval}
@@ -227,6 +245,18 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
                       {p.description}
                     </p>
                   )}
+
+                  <div className="mt-4 space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-xs font-medium text-foreground">
+                      Share this link or embed it — no code required
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 truncate font-mono text-[11px] text-muted-foreground">
+                        {p.checkoutUrl}
+                      </code>
+                      <CopyTextButton text={p.checkoutUrl} label="Copy checkout link" />
+                    </div>
+                  </div>
 
                   <div className="mt-4 flex items-center justify-between border-t border-border pt-4 text-sm">
                     <span className="flex items-center gap-1.5 text-muted-foreground">

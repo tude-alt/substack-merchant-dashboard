@@ -11,6 +11,7 @@ export type PlanInput = {
   trialDays: number
   retryAttempts: number
   retryIntervalDays: number
+  successRedirectUrl?: string
 }
 
 export type PlanRow = typeof plan.$inferSelect
@@ -26,6 +27,7 @@ export function formatPlanForApi(p: PlanRow) {
     interval: p.interval,
     retry_attempts: p.retryAttempts,
     retry_every_days: p.retryIntervalDays,
+    success_redirect_url: p.successRedirectUrl || null,
     status: "active" as const,
   }
 }
@@ -87,6 +89,7 @@ export async function createPlanForUser(userId: string, input: PlanInput) {
       trialDays: input.trialDays,
       retryAttempts: input.retryAttempts,
       retryIntervalDays: input.retryIntervalDays,
+      successRedirectUrl: (input.successRedirectUrl ?? "").trim(),
     })
     .returning()
 
@@ -126,5 +129,11 @@ export function parsePlanInputFromBody(body: Record<string, unknown>): PlanInput
         : body.retryIntervalDays !== undefined
           ? Number(body.retryIntervalDays)
           : 3,
+    successRedirectUrl:
+      typeof body.success_redirect_url === "string"
+        ? body.success_redirect_url.trim()
+        : typeof body.successRedirectUrl === "string"
+          ? body.successRedirectUrl.trim()
+          : "",
   }
 }

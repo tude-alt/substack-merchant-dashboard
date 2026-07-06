@@ -150,6 +150,7 @@ ALTER TABLE "subscriber" ADD COLUMN IF NOT EXISTS "checkoutLink" text;
 ALTER TABLE "webhook_delivery" ADD COLUMN IF NOT EXISTS "attempt" integer NOT NULL DEFAULT 1;
 ALTER TABLE "webhook_delivery" ADD COLUMN IF NOT EXISTS "error" text;
 ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "webhookSecret" text NOT NULL DEFAULT '';
+ALTER TABLE "plan" ADD COLUMN IF NOT EXISTS "successRedirectUrl" text NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS "api_idempotency" (
   "id" serial PRIMARY KEY,
