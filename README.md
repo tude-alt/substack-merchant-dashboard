@@ -1,6 +1,6 @@
-# substack-merchant-dashboard
+# subflow-merchant-dashboard
 
-Substack Merchant Dashboard is an MVP built for the Nomba hackathon. It gives merchants a clean, fast way to manage subscriptions, payments, and webhook-driven commerce workflows from a single dashboard. The experience is intentionally kept virgin at first use so teams can add their own plans, subscribers, transactions, and credentials without any preloaded demo content.
+Subflow Merchant Dashboard is an MVP built for the Nomba hackathon. It gives merchants a clean, fast way to manage subscriptions, payments, and webhook-driven commerce workflows from a single dashboard. The experience is intentionally kept virgin at first use so teams can add their own plans, subscribers, transactions, and credentials without any preloaded demo content.
 
 ## MVP focus
 
@@ -55,8 +55,8 @@ Use the API Keys section in Settings to generate and manage your keys.
 import os
 import requests
 
-api_key = os.getenv("SUBSTACK_API_KEY", "your-key-here")
-url = "https://your-domain.example.com/api/merchant"
+api_key = os.getenv("SUBFLOW_API_KEY", "your-key-here")
+url = "https://your-domain.example.com/api/v1/subscribers"
 
 response = requests.get(
     url,

@@ -142,7 +142,7 @@ export function ApiKeysSection({
         <div>
           <h2 className="font-semibold text-foreground">API Keys</h2>
           <p className="text-sm text-muted-foreground">
-            Use these to authenticate requests to the SubStack API.
+            Use these to authenticate requests to the Subflow API.
           </p>
         </div>
       </div>

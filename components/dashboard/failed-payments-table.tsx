@@ -124,7 +124,7 @@ export function FailedPaymentsTable({ rows }: { rows: FailedTx[] }) {
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-accent/40">
+                <TableRow key={row.id} className="hover:bg-muted/40">
                   <TableCell>
                     <div className="font-medium text-foreground">
                       {row.customerName}

@@ -17,6 +17,7 @@ import {
   emptyPlanForm,
   type PlanFormState,
 } from "@/components/plan-form-fields"
+import { PageHeader } from "@/components/page-header"
 import { createPlan } from "@/app/actions/plans"
 import { formatNaira } from "@/lib/format"
 import { Plus, Layers, Users, AlertCircle } from "lucide-react"
@@ -69,23 +70,20 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Plans
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Billing plans your customers can subscribe to.
-          </p>
-        </div>
-        <Button onClick={() => setOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New plan
-        </Button>
-      </div>
+      <div className="space-y-6">
+        <PageHeader
+          title="Plans"
+          description="Billing plans your customers can subscribe to."
+          action={
+            <Button onClick={() => setOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New plan
+            </Button>
+          }
+        />
 
-      {plans.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center px-5 py-16 text-center">
+        {plans.length === 0 ? (
+          <Card className="flex flex-col items-center justify-center px-5 py-16 text-center">
           <Layers className="mb-3 h-8 w-8 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground">No plans yet</p>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground text-pretty">
@@ -96,9 +94,9 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
             <Plus className="h-4 w-4" />
             Create a plan
           </Button>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {plans.map((p) => (
             <Card key={p.id} className="flex flex-col p-5">
               <div className="flex items-start justify-between">
@@ -141,8 +139,9 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
               </div>
             </Card>
           ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="flex w-full flex-col sm:max-w-md">

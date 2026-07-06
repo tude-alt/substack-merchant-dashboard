@@ -210,7 +210,7 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
                 <Fragment key={s.id}>
                   <TableRow
                     onClick={() => toggle(s.id)}
-                    className="cursor-pointer hover:bg-accent/40"
+                    className="cursor-pointer hover:bg-muted/40"
                     data-state={isOpen ? "open" : undefined}
                   >
                     <TableCell>

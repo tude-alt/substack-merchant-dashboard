@@ -6,7 +6,7 @@ export default async function TransactionsPage() {
   const initial = await getTransactions({ page: 1 })
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Transactions"
         description="Every charge processed through your Nomba integration."
