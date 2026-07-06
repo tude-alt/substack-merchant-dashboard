@@ -94,9 +94,11 @@ NOMBA_ACCOUNT_ID=...       # Nomba parent accountId (sent in the accountId heade
 # Optional: point at the Nomba sandbox (use sandbox credentials with it).
 # NOMBA_BASE_URL=https://sandbox.nomba.com
 
-# Signature key configured on the Nomba dashboard (Developer -> Webhook Setup).
-# Inbound Nomba webhooks are rejected unless the HMAC-SHA256 signature verifies.
-NOMBA_WEBHOOK_SIGNATURE_KEY=...
+# Optional: signature key configured on the Nomba dashboard (Developer ->
+# Webhook Setup). When set, inbound webhooks must carry a valid HMAC-SHA256
+# signature. Whether or not it is set, every payment event is additionally
+# verified against Nomba's transaction API before any state changes.
+# NOMBA_WEBHOOK_SIGNATURE_KEY=...
 
 # Protects GET /api/cron/billing (scheduled charges + retries).
 CRON_SECRET=replace-with-a-long-random-secret

@@ -323,13 +323,18 @@ export type NombaVerification =
   | { found: true; status: string; transactionId: string; gatewayMessage?: string; raw: unknown }
   | { found: false; code: string; description: string }
 
-export async function verifyTransactionByOrderReference(
-  orderReference: string,
-): Promise<NombaVerification> {
-  const res = await nombaFetch(
-    `/v1/transactions/accounts/single?orderReference=${encodeURIComponent(orderReference)}`,
-    { method: "GET" },
-  )
+export async function verifyTransaction(query: {
+  orderReference?: string
+  transactionRef?: string
+}): Promise<NombaVerification> {
+  const params = new URLSearchParams()
+  if (query.orderReference) params.set("orderReference", query.orderReference)
+  else if (query.transactionRef) params.set("transactionRef", query.transactionRef)
+  else throw new Error("verifyTransaction requires an orderReference or transactionRef")
+
+  const res = await nombaFetch(`/v1/transactions/accounts/single?${params.toString()}`, {
+    method: "GET",
+  })
   try {
     const data = await parseNombaResponse<{
       id: string
@@ -353,20 +358,15 @@ export async function verifyTransactionByOrderReference(
 }
 
 // ---------------------------------------------------------------------------
-// Inbound webhook signature verification (HmacSHA256, base64 — per Nomba docs)
+// Inbound webhook signature verification (HmacSHA256, base64 — per Nomba docs).
+// Only applicable when a signature key is configured; when it is not, events
+// must be verified against Nomba's transaction API before being trusted.
 // ---------------------------------------------------------------------------
 export function verifyNombaWebhookSignature(
   rawBody: string,
   signatureHeader: string | null,
+  key: string,
 ): { valid: boolean; reason?: string } {
-  const key = process.env.NOMBA_WEBHOOK_SIGNATURE_KEY?.trim()
-  if (!key) {
-    return {
-      valid: false,
-      reason:
-        "NOMBA_WEBHOOK_SIGNATURE_KEY is not set. Configure the signature key on the Nomba dashboard (Developer → Webhook Setup) and set the same value in the environment.",
-    }
-  }
   if (!signatureHeader) {
     return { valid: false, reason: "Missing nomba-signature header" }
   }

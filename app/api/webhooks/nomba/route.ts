@@ -1,31 +1,42 @@
 import { db } from "@/lib/db"
 import { activity, plan, subscriber, transaction } from "@/lib/db/schema"
 import { monthlyMrrKobo, nextBillingDate } from "@/lib/billing"
-import { verifyNombaWebhookSignature } from "@/lib/nomba"
+import { verifyNombaWebhookSignature, verifyTransaction } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { and, eq, or } from "drizzle-orm"
 
 /**
- * Inbound webhook receiver for Nomba events (configure this URL on the Nomba
- * dashboard: Developer → Webhook Setup).
+ * Inbound webhook receiver for Nomba events (register this URL with Nomba).
  *
  * Payload shape per developer.nomba.com:
  *   { event_type, requestId, data: { merchant, transaction, order?, tokenizedCardData?, customer? } }
  *
- * Signature: HMAC-SHA256 (base64) of the raw body using the signature key set
- * on the Nomba dashboard, sent in the `nomba-signature` header. Unsigned or
- * mis-signed requests are rejected — no trust without verification.
+ * Trust model (per Nomba docs: "always verify the transaction with Nomba
+ * before giving value, even if you received a webhook"):
+ *   1. If NOMBA_WEBHOOK_SIGNATURE_KEY is set, the HMAC-SHA256 signature in the
+ *      `nomba-signature` header must match or the request is rejected.
+ *   2. Regardless of signature, every payment event is confirmed with a real
+ *      lookup against Nomba's transaction API before any state changes. A
+ *      forged POST cannot activate a subscription because Nomba's API will not
+ *      corroborate it.
  */
 
 export async function POST(request: Request) {
   const rawBody = await request.text()
 
-  const signature =
-    request.headers.get("nomba-signature") ?? request.headers.get("nomba-sig-value")
-  const check = verifyNombaWebhookSignature(rawBody, signature)
-  if (!check.valid) {
-    console.error(`[nomba-webhook] rejected: ${check.reason}`)
-    return Response.json({ error: check.reason }, { status: 401 })
+  const signatureKey = process.env.NOMBA_WEBHOOK_SIGNATURE_KEY?.trim()
+  if (signatureKey) {
+    const signature =
+      request.headers.get("nomba-signature") ?? request.headers.get("nomba-sig-value")
+    const check = verifyNombaWebhookSignature(rawBody, signature, signatureKey)
+    if (!check.valid) {
+      console.error(`[nomba-webhook] rejected: ${check.reason}`)
+      return Response.json({ error: check.reason }, { status: 401 })
+    }
+  } else {
+    console.warn(
+      "[nomba-webhook] NOMBA_WEBHOOK_SIGNATURE_KEY not set — relying on Nomba API lookup verification for this event.",
+    )
   }
 
   let payload: {
@@ -52,9 +63,20 @@ export async function POST(request: Request) {
   console.log(`[nomba-webhook] received ${eventType} (requestId=${payload.requestId})`)
 
   switch (eventType) {
-    case "payment_success":
-      await handlePaymentSuccess(data)
+    case "payment_success": {
+      const verification = await verifyPaymentEvent(data)
+      if (!verification.confirmed) {
+        console.error(
+          `[nomba-webhook] payment_success NOT corroborated by Nomba API (${verification.reason}) — ignoring event.`,
+        )
+        return Response.json(
+          { error: `Event not corroborated by Nomba transaction API: ${verification.reason}` },
+          { status: 422 },
+        )
+      }
+      await handlePaymentSuccess(data, verification.transactionId)
       break
+    }
     case "payment_failed":
       await handlePaymentFailed(data)
       break
@@ -69,13 +91,47 @@ function str(v: unknown): string {
   return typeof v === "string" ? v : v == null ? "" : String(v)
 }
 
-async function handlePaymentSuccess(data: {
+/**
+ * Confirm a payment_success event with a real lookup on Nomba's transaction
+ * API. Only a Nomba-confirmed SUCCESS may change state.
+ */
+async function verifyPaymentEvent(data: {
   transaction?: Record<string, unknown>
   order?: Record<string, unknown>
-  tokenizedCardData?: Record<string, unknown>
-}) {
+}): Promise<
+  { confirmed: true; transactionId: string } | { confirmed: false; reason: string }
+> {
   const orderReference = str(data.order?.orderReference)
-  const nombaTransactionId = str(data.transaction?.transactionId)
+  const transactionRef = str(data.transaction?.transactionId)
+  if (!orderReference && !transactionRef) {
+    return { confirmed: false, reason: "event carries no orderReference or transactionId" }
+  }
+
+  const result = await verifyTransaction(
+    orderReference ? { orderReference } : { transactionRef },
+  )
+  if (!result.found) {
+    return {
+      confirmed: false,
+      reason: `Nomba lookup found no transaction (${result.code}: ${result.description})`,
+    }
+  }
+  if (result.status !== "SUCCESS") {
+    return { confirmed: false, reason: `Nomba reports status "${result.status}", not SUCCESS` }
+  }
+  return { confirmed: true, transactionId: result.transactionId }
+}
+
+async function handlePaymentSuccess(
+  data: {
+    transaction?: Record<string, unknown>
+    order?: Record<string, unknown>
+    tokenizedCardData?: Record<string, unknown>
+  },
+  verifiedTransactionId: string,
+) {
+  const orderReference = str(data.order?.orderReference)
+  const nombaTransactionId = str(data.transaction?.transactionId) || verifiedTransactionId
   const tokenKey = str(data.tokenizedCardData?.tokenKey)
 
   // Case 1: initial tokenizing checkout for a pending subscriber.
@@ -236,6 +292,22 @@ async function handlePaymentFailed(data: {
       `[nomba-webhook] payment_failed did not match a pending transaction (orderReference=${orderReference})`,
     )
     return
+  }
+
+  // Corroborate with Nomba's API: never mark a charge failed that Nomba's own
+  // records say succeeded (guards against forged/stale failure events).
+  try {
+    const lookup = await verifyTransaction(
+      orderReference ? { orderReference } : { transactionRef: nombaTransactionId },
+    )
+    if (lookup.found && lookup.status === "SUCCESS") {
+      console.warn(
+        `[nomba-webhook] payment_failed contradicted by Nomba API (status SUCCESS) — ignoring event.`,
+      )
+      return
+    }
+  } catch (e) {
+    console.error("[nomba-webhook] failure-event verification lookup errored:", e)
   }
 
   // Schedule a retry from the plan's real retry configuration.
