@@ -7,6 +7,12 @@ import { Pool } from "pg"
 
 const DATABASE_URL = process.env.DATABASE_URL
 if (!DATABASE_URL) {
+  // During `next build` on Vercel the variable is present; local builds without
+  // a database can still compile the app (--build passes this soft mode).
+  if (process.argv.includes("--build")) {
+    console.warn("DATABASE_URL is not set — skipping migration for this build.")
+    process.exit(0)
+  }
   console.error("DATABASE_URL is not set. Refusing to guess a connection string.")
   process.exit(1)
 }
