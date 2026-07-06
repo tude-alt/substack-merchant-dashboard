@@ -20,6 +20,7 @@ export type PlanFormState = {
   trialDays: string
   retryAttempts: string
   retryIntervalDays: string
+  successRedirectUrl: string
 }
 
 export const emptyPlanForm: PlanFormState = {
@@ -31,6 +32,7 @@ export const emptyPlanForm: PlanFormState = {
   trialDays: "0",
   retryAttempts: "3",
   retryIntervalDays: "3",
+  successRedirectUrl: "",
 }
 
 export function PlanFormFields({
@@ -140,6 +142,21 @@ export function PlanFormFields({
             onChange={(e) => set("retryIntervalDays", e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="plan-success-url">Success redirect URL (optional)</Label>
+        <Input
+          id="plan-success-url"
+          type="url"
+          placeholder="https://yoursite.com/welcome"
+          value={value.successRedirectUrl}
+          onChange={(e) => set("successRedirectUrl", e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          Where customers land after hosted checkout. Leave blank to use Subflow&apos;s default
+          confirmation page.
+        </p>
       </div>
     </div>
   )

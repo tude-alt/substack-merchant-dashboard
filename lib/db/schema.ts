@@ -92,6 +92,7 @@ export const plan = pgTable("plan", {
   trialDays: integer("trialDays").notNull().default(0),
   retryAttempts: integer("retryAttempts").notNull().default(3),
   retryIntervalDays: integer("retryIntervalDays").notNull().default(3),
+  successRedirectUrl: text("successRedirectUrl").notNull().default(""),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
