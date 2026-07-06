@@ -3,10 +3,7 @@ import "server-only"
 import crypto from "crypto"
 import { db } from "@/lib/db"
 import { activity, plan, subscriber, transaction } from "@/lib/db/schema"
-import {
-  chargeTokenizedCard,
-  verifyTransactionByOrderReference,
-} from "@/lib/nomba"
+import { chargeTokenizedCard, verifyTransaction } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { and, eq } from "drizzle-orm"
 
@@ -129,7 +126,7 @@ export async function chargeSubscriberViaNomba(
     let verifiedStatus: string | null = null
     let nombaRef = orderReference
     try {
-      const verification = await verifyTransactionByOrderReference(orderReference)
+      const verification = await verifyTransaction({ orderReference })
       if (verification.found) {
         verifiedStatus = verification.status
         nombaRef = verification.transactionId
