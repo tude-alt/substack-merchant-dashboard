@@ -230,7 +230,7 @@ export function MarketingHome() {
               <Logo showWordmark={true} />
             </div>
             <p className="text-sm text-foreground/60">
-              © 2025 Subflow. Built for Nigerian SaaS.
+              © 2026 Subflow. Built for Nigerian SaaS.
             </p>
           </div>
         </div>

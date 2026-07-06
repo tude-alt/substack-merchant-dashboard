@@ -19,7 +19,15 @@ export default async function OnboardingPage() {
           <Logo />
         </Link>
       </header>
-      <div className="mx-auto w-full max-w-xl px-4 py-10">
+      <div className="mx-auto w-full max-w-xl space-y-8 px-4 py-10">
+        <div className="space-y-1 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
+            Set up your workspace
+          </h1>
+          <p className="text-sm text-muted-foreground text-pretty">
+            Two quick steps before you can start billing customers with Subflow.
+          </p>
+        </div>
         <OnboardingWizard
           initialBusinessName={merchant.businessName}
           initialCategory={merchant.category}

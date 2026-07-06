@@ -16,23 +16,21 @@ export default async function SettingsPage() {
     : []
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Settings"
         description="Manage your API credentials and webhook delivery."
       />
-      <div className="space-y-6">
-        <GettingStartedGuide />
-        <ApiKeysSection
-          liveApiKey={merchant.liveApiKey}
-          testApiKey={merchant.testApiKey}
-        />
-        <WebhookSection
-          webhookUrl={merchant.webhookUrl}
-          selectedEvents={selectedEvents}
-          deliveries={deliveries}
-        />
-      </div>
+      <GettingStartedGuide />
+      <ApiKeysSection
+        liveApiKey={merchant.liveApiKey}
+        testApiKey={merchant.testApiKey}
+      />
+      <WebhookSection
+        webhookUrl={merchant.webhookUrl}
+        selectedEvents={selectedEvents}
+        deliveries={deliveries}
+      />
     </div>
   )
 }

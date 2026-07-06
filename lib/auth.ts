@@ -26,7 +26,7 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     // Hardcode known deployment for guaranteed trust
-    "https://substack-merchant-dashboard.vercel.app",
+    "https://subflow-merchant-dashboard.vercel.app",
     // Fallback for custom domains
     ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
   ],

@@ -138,7 +138,7 @@ export function WebhookSection({
         <Input
           id="webhook-url"
           type="url"
-          placeholder="https://api.yourapp.com/webhooks/substack"
+          placeholder="https://api.yourapp.com/webhooks/subflow"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
