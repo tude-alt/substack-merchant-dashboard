@@ -149,6 +149,17 @@ ALTER TABLE "subscriber" ADD COLUMN IF NOT EXISTS "initOrderReference" text;
 ALTER TABLE "subscriber" ADD COLUMN IF NOT EXISTS "checkoutLink" text;
 ALTER TABLE "webhook_delivery" ADD COLUMN IF NOT EXISTS "attempt" integer NOT NULL DEFAULT 1;
 ALTER TABLE "webhook_delivery" ADD COLUMN IF NOT EXISTS "error" text;
+ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "webhookSecret" text NOT NULL DEFAULT '';
+
+CREATE TABLE IF NOT EXISTS "api_idempotency" (
+  "id" serial PRIMARY KEY,
+  "userId" text NOT NULL,
+  "idempotencyKey" text NOT NULL,
+  "statusCode" integer NOT NULL,
+  "responseBody" text NOT NULL,
+  "createdAt" timestamp NOT NULL DEFAULT now(),
+  UNIQUE("userId", "idempotencyKey")
+);
 
 -- Remove fabricated-success defaults: statuses must come from real outcomes ----
 ALTER TABLE "subscriber" ALTER COLUMN "status" SET DEFAULT 'pending_payment';

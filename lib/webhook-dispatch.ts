@@ -2,15 +2,22 @@ import "server-only"
 
 import { db } from "@/lib/db"
 import { merchant, webhookDelivery } from "@/lib/db/schema"
+import { ensureWebhookSecret } from "@/lib/merchant-secrets"
+import {
+  buildWebhookEnvelope,
+  computeWebhookSignature,
+  type WebhookEventType,
+  webhookDataFromLegacy,
+} from "@/lib/webhook-payload"
 import { eq } from "drizzle-orm"
 
 /**
  * Real outbound webhook delivery.
  *
- * Every row written to webhook_delivery corresponds to exactly one HTTP POST
- * that actually left this server. Status code 0 means the request got no HTTP
- * response at all (DNS failure / connection refused / timeout) — the `error`
- * column carries the real network error. Nothing here is simulated.
+ * Payload shape:
+ *   { type, data: { subscriber_id, email, plan_id, amount, attempt?, final_attempt? }, timestamp }
+ *
+ * Signed with HMAC-SHA256 (hex) in X-Subflow-Signature using the merchant's webhook secret.
  */
 
 const MAX_ATTEMPTS = 3
@@ -30,7 +37,7 @@ export type WebhookDispatchResult =
       }[]
     }
 
-async function postOnce(endpoint: string, body: string) {
+async function postOnce(endpoint: string, body: string, signature: string) {
   const started = Date.now()
   try {
     const res = await fetch(endpoint, {
@@ -38,12 +45,12 @@ async function postOnce(endpoint: string, body: string) {
       headers: {
         "Content-Type": "application/json",
         "User-Agent": "Subflow-Webhooks/1.0",
+        "X-Subflow-Signature": signature,
       },
       body,
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       cache: "no-store",
     })
-    // Drain the body so the connection is released; response content is not used.
     await res.text().catch(() => {})
     return {
       statusCode: res.status,
@@ -61,7 +68,7 @@ async function postOnce(endpoint: string, body: string) {
 
 export async function dispatchMerchantWebhook(
   userId: string,
-  event: string,
+  event: WebhookEventType,
   payload: Record<string, unknown>,
   opts: { bypassSubscriptionFilter?: boolean } = {},
 ): Promise<WebhookDispatchResult> {
@@ -77,11 +84,10 @@ export async function dispatchMerchantWebhook(
     return { sent: false, reason: `Merchant is not subscribed to event "${event}".` }
   }
 
-  const body = JSON.stringify({
-    event,
-    created_at: new Date().toISOString(),
-    data: payload,
-  })
+  const secret = await ensureWebhookSecret(userId)
+  const envelope = buildWebhookEnvelope(event, webhookDataFromLegacy(payload))
+  const body = JSON.stringify(envelope)
+  const signature = computeWebhookSignature(body, secret)
 
   const attempts: {
     attempt: number
@@ -91,10 +97,9 @@ export async function dispatchMerchantWebhook(
   }[] = []
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const result = await postOnce(endpoint, body)
+    const result = await postOnce(endpoint, body, signature)
     attempts.push({ attempt, ...result })
 
-    // Record the real result of this exact HTTP request.
     await db.insert(webhookDelivery).values({
       userId,
       endpoint,
@@ -106,7 +111,7 @@ export async function dispatchMerchantWebhook(
     })
 
     console.log(
-      `[webhook] POST ${endpoint} event=${event} attempt=${attempt} status=${result.statusCode} ` +
+      `[webhook] POST ${endpoint} type=${event} attempt=${attempt} status=${result.statusCode} ` +
         `time=${result.responseTimeMs}ms${result.error ? ` error=${result.error}` : ""}`,
     )
 
@@ -119,4 +124,19 @@ export async function dispatchMerchantWebhook(
   }
 
   return { sent: true, delivered: false, attempts }
+}
+
+export function formatWebhookTestResult(result: WebhookDispatchResult) {
+  if (!result.sent) {
+    return { ok: false as const, error: result.reason }
+  }
+  const last = result.attempts[result.attempts.length - 1]
+  return {
+    ok: result.delivered,
+    delivered: result.delivered,
+    status_code: last.statusCode,
+    response_time_ms: last.responseTimeMs,
+    attempts: result.attempts.length,
+    error: last.error ?? undefined,
+  }
 }

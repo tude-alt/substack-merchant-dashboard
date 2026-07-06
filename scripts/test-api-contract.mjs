@@ -75,4 +75,14 @@ assert.deepEqual(parseSubscriberCreateBody({
 
 assert.ok("error" in parseSubscriberCreateBody({ email: "x@y.com", plan_id: 1 }))
 
+function parsePaymentMethod(body) {
+  const raw = typeof body.payment_method === "string" ? body.payment_method.trim() : "nomba_checkout_link"
+  if (raw === "nomba_checkout_link" || raw === "") return "ok"
+  if (raw === "nomba_virtual_account") return "va_error"
+  return "unsupported"
+}
+
+assert.equal(parsePaymentMethod({ payment_method: "nomba_checkout_link" }), "ok")
+assert.equal(parsePaymentMethod({ payment_method: "nomba_virtual_account" }), "va_error")
+
 console.log("All API contract parsing tests passed.")

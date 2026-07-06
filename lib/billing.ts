@@ -170,16 +170,12 @@ export async function chargeSubscriberViaNomba(
           : `Charged ${sub.name} for ${p.name} (${nombaRef})`,
       })
 
-      await dispatchMerchantWebhook(userId, "charge.success", {
+      await dispatchMerchantWebhook(userId, opts.retryOfTransactionId ? "charge.retried" : "charge.success", {
         subscriber_id: sub.id,
-        customer_email: sub.email,
+        email: sub.email,
         plan_id: p.id,
-        plan_name: p.name,
-        amount_kobo: p.amount,
-        currency: p.currency,
-        nomba_reference: nombaRef,
-        order_reference: orderReference,
-        retry_attempt: opts.retryOfTransactionId ? priorRetryCount + 1 : 0,
+        amount: p.amount,
+        attempt: opts.retryOfTransactionId ? priorRetryCount + 1 : undefined,
       })
     } else {
       await db
@@ -240,16 +236,11 @@ export async function chargeSubscriberViaNomba(
 
   await dispatchMerchantWebhook(userId, "charge.failed", {
     subscriber_id: sub.id,
-    customer_email: sub.email,
+    email: sub.email,
     plan_id: p.id,
-    plan_name: p.name,
-    amount_kobo: p.amount,
-    currency: p.currency,
-    order_reference: orderReference,
-    failure_reason: failureReason,
-    retry_attempt: attemptNumber,
-    retries_remaining: Math.max(0, p.retryAttempts - attemptNumber),
-    next_retry_date: nextRetry?.toISOString() ?? null,
+    amount: p.amount,
+    attempt: attemptNumber + 1,
+    final_attempt: !retriesRemaining,
   })
 
   return {

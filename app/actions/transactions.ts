@@ -150,11 +150,10 @@ export async function cancelCharge(transactionId: number) {
   })
 
   await dispatchMerchantWebhook(userId, "subscription.cancelled", {
-    transaction_id: tx.id,
     subscriber_id: tx.subscriberId,
-    customer_name: tx.customerName,
-    plan_name: tx.planName,
-    reason: "cancelled_after_failed_charge",
+    email: "",
+    plan_id: null,
+    amount: tx.amount,
   })
 
   revalidatePath("/dashboard")

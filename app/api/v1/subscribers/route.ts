@@ -1,21 +1,24 @@
-import crypto from "crypto"
-import { db } from "@/lib/db"
-import { activity, plan, subscriber } from "@/lib/db/schema"
-import { getAppUrl } from "@/lib/billing"
-import { createCheckoutOrder, NombaApiError, NombaConfigError } from "@/lib/nomba"
-import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { authenticateMerchant } from "@/lib/api/auth"
+import {
+  buildSubscriberCreateResponse,
+  createSubscriberForMerchant,
+  PlanNotFoundError,
+  NombaApiError,
+  NombaConfigError,
+} from "@/lib/api/create-subscriber"
 import {
   apiError,
   apiInvalidRequest,
   apiPlanNotFound,
   apiUnauthorized,
 } from "@/lib/api/errors"
+import { getIdempotentResponse, storeIdempotentResponse } from "@/lib/api/idempotency"
 import {
-  formatSubscriberCreated,
   formatSubscriberListed,
   parseSubscriberCreateBody,
 } from "@/lib/api/subscribers"
+import { db } from "@/lib/db"
+import { subscriber } from "@/lib/db/schema"
 import { desc, eq } from "drizzle-orm"
 
 export async function GET(request: Request) {
@@ -37,6 +40,17 @@ export async function POST(request: Request) {
   const auth = await authenticateMerchant(request)
   if (!auth) return apiUnauthorized()
 
+  const idempotencyKey = request.headers.get("Idempotency-Key")?.trim() ?? ""
+  if (idempotencyKey) {
+    const cached = await getIdempotentResponse(auth.merchant.userId, idempotencyKey)
+    if (cached) {
+      return new Response(cached.responseBody, {
+        status: cached.statusCode,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+  }
+
   let body: Record<string, unknown>
   try {
     body = await request.json()
@@ -51,30 +65,39 @@ export async function POST(request: Request) {
 
   const { name, email, phone, planId } = parsed
 
-  const [p] = await db
-    .select()
-    .from(plan)
-    .where(eq(plan.id, planId))
-    .limit(1)
-
-  if (!p || p.userId !== auth.merchant.userId) {
-    return apiPlanNotFound(planId)
-  }
-
-  const initOrderReference = `SUBFLOW-INIT-${crypto.randomUUID()}`
-
-  let checkoutLink: string
   try {
-    const order = await createCheckoutOrder({
-      amountKobo: p.amount,
-      currency: p.currency,
-      customerEmail: email,
-      customerId: email,
-      orderReference: initOrderReference,
-      callbackUrl: `${getAppUrl()}/dashboard/subscribers`,
+    const result = await createSubscriberForMerchant({
+      userId: auth.merchant.userId,
+      mode: auth.mode,
+      name,
+      email,
+      phone,
+      planId,
     })
-    checkoutLink = order.checkoutLink
+
+    const { data, status } = buildSubscriberCreateResponse(
+      result.subscriber,
+      result.kind === "created" ? "created" : "existing",
+    )
+    const responseBody = JSON.stringify({ data })
+
+    if (idempotencyKey) {
+      await storeIdempotentResponse(
+        auth.merchant.userId,
+        idempotencyKey,
+        status,
+        responseBody,
+      )
+    }
+
+    return new Response(responseBody, {
+      status,
+      headers: { "Content-Type": "application/json" },
+    })
   } catch (e) {
+    if (e instanceof PlanNotFoundError) {
+      return apiPlanNotFound(e.planId)
+    }
     if (e instanceof NombaConfigError) {
       return apiError("nomba_not_configured", e.message, 503)
     }
@@ -85,47 +108,4 @@ export async function POST(request: Request) {
     }
     throw e
   }
-
-  const [created] = await db
-    .insert(subscriber)
-    .values({
-      userId: auth.merchant.userId,
-      name,
-      email,
-      phone,
-      planId: p.id,
-      planName: p.name,
-      status: "pending_payment",
-      lastChargeResult: "none",
-      mrr: 0,
-      initOrderReference,
-      checkoutLink,
-      billingDate: new Date(),
-    })
-    .returning()
-
-  await db.insert(activity).values({
-    userId: auth.merchant.userId,
-    type: "subscription.created",
-    message: `${name} subscribed to ${p.name} via API (${auth.mode} key) — awaiting first payment`,
-  })
-
-  await dispatchMerchantWebhook(auth.merchant.userId, "subscription.created", {
-    subscriber_id: created.id,
-    name,
-    email,
-    plan_id: p.id,
-    plan_name: p.name,
-    amount_kobo: p.amount,
-    currency: p.currency,
-    status: created.status,
-    order_reference: initOrderReference,
-  })
-
-  return Response.json(
-    {
-      data: formatSubscriberCreated(created),
-    },
-    { status: 201 },
-  )
 }

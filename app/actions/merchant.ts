@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { merchant } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
 import { verifyNombaCredentials } from "@/lib/nomba"
+import { regenerateWebhookSecret as rotateWebhookSecret } from "@/lib/merchant-secrets"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -15,6 +16,10 @@ function genApiKey(prefix: string) {
   return `${prefix}_${body}`
 }
 
+function genWebhookSecret() {
+  return `whsec_${crypto.randomBytes(24).toString("hex")}`
+}
+
 export async function getMerchant() {
   const userId = await getUserId()
   const rows = await db
@@ -23,7 +28,17 @@ export async function getMerchant() {
     .where(eq(merchant.userId, userId))
     .limit(1)
 
-  if (rows.length > 0) return rows[0]
+  if (rows.length > 0) {
+    if (!rows[0].webhookSecret?.trim()) {
+      const secret = genWebhookSecret()
+      await db
+        .update(merchant)
+        .set({ webhookSecret: secret })
+        .where(eq(merchant.userId, userId))
+      return { ...rows[0], webhookSecret: secret }
+    }
+    return rows[0]
+  }
 
   // Create an empty merchant record on first access.
   const [created] = await db
@@ -32,7 +47,8 @@ export async function getMerchant() {
       userId,
       liveApiKey: genApiKey("sk_live"),
       testApiKey: genApiKey("sk_test"),
-      webhookEvents: "subscription.created,charge.success,charge.failed",
+      webhookSecret: genWebhookSecret(),
+      webhookEvents: "subscription.created,charge.success,charge.failed,charge.retried",
     })
     .returning()
   return created
@@ -116,4 +132,12 @@ export async function saveWebhookConfig(input: {
     .set({ webhookUrl: input.webhookUrl, webhookEvents: input.events.join(",") })
     .where(eq(merchant.userId, userId))
   revalidatePath("/dashboard/settings")
+}
+
+export async function regenerateWebhookSecret() {
+  const userId = await getUserId()
+  await getMerchant()
+  const secret = await rotateWebhookSecret(userId)
+  revalidatePath("/dashboard/settings")
+  return secret
 }

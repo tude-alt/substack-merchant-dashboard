@@ -42,6 +42,7 @@ export async function getPlansWithStats() {
 
 export async function createPlan(input: PlanInput) {
   const userId = await getUserId()
-  await createPlanForUser(userId, input)
+  const created = await createPlanForUser(userId, input)
   revalidatePath("/dashboard/plans")
+  return { id: created.id, name: created.name }
 }
