@@ -2,6 +2,7 @@
 
 import { Fragment, useState, useTransition } from "react"
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -12,8 +13,18 @@ import {
 } from "@/components/ui/table"
 import { StatusPill } from "@/components/status-pill"
 import { formatNaira, formatDate } from "@/lib/format"
-import { getSubscriberHistory } from "@/app/actions/subscribers"
-import { ChevronDown, Users } from "lucide-react"
+import {
+  getSubscriberHistory,
+  chargeSubscriberNow,
+} from "@/app/actions/subscribers"
+import {
+  ChevronDown,
+  Users,
+  Zap,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type Subscriber = {
@@ -26,6 +37,8 @@ type Subscriber = {
   billingDate: Date
   lastChargeResult: string
   mrr: number
+  hasTokenizedCard: boolean
+  checkoutLink: string | null
 }
 
 type HistoryRow = {
@@ -99,6 +112,33 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
   )
   const [, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<number | null>(null)
+  const [chargingId, setChargingId] = useState<number | null>(null)
+  const [banner, setBanner] = useState<
+    { kind: "success" | "error"; text: string } | null
+  >(null)
+
+  function chargeNow(s: Subscriber) {
+    setBanner(null)
+    setChargingId(s.id)
+    startTransition(async () => {
+      // Real tokenized-card charge via Nomba; banner shows the real outcome.
+      const res = await chargeSubscriberNow(s.id)
+      if (res.ok) {
+        setBanner({
+          kind: "success",
+          text: `Charge for ${s.name} ${res.status === "successful" ? "succeeded" : "accepted (pending Nomba confirmation)"} — ref ${res.nombaRef}`,
+        })
+      } else {
+        setBanner({ kind: "error", text: `Charge for ${s.name} failed: ${res.error}` })
+      }
+      setChargingId(null)
+      // Refresh the history so the new real transaction appears.
+      setLoadingId(s.id)
+      const rows = await getSubscriberHistory(s.id)
+      setHistoryCache((c) => ({ ...c, [s.id]: rows as HistoryRow[] }))
+      setLoadingId(null)
+    })
+  }
 
   function toggle(id: number) {
     if (expanded === id) {
@@ -133,6 +173,21 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
 
   return (
     <Card className="overflow-hidden">
+      {banner && (
+        <div
+          role="alert"
+          className={`flex items-start gap-2 border-b border-border px-5 py-2.5 text-sm ${
+            banner.kind === "success" ? "text-success" : "text-destructive"
+          }`}
+        >
+          {banner.kind === "success" ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          ) : (
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          )}
+          <span className="min-w-0 break-words">{banner.text}</span>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -200,6 +255,43 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
                             Plan:{" "}
                             <span className="text-foreground">{s.planName}</span>
                           </span>
+                          <span className="text-muted-foreground">
+                            Card on file:{" "}
+                            <span className="text-foreground">
+                              {s.hasTokenizedCard ? "Yes (tokenized via Nomba)" : "No"}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                          {s.hasTokenizedCard && s.status !== "cancelled" && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-7 gap-1.5"
+                              disabled={chargingId === s.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                chargeNow(s)
+                              }}
+                            >
+                              <Zap className="h-3.5 w-3.5" />
+                              {chargingId === s.id
+                                ? "Charging via Nomba…"
+                                : "Charge now"}
+                            </Button>
+                          )}
+                          {s.status === "pending_payment" && s.checkoutLink && (
+                            <a
+                              href={s.checkoutLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-foreground hover:bg-muted/40"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              Open Nomba checkout (first payment)
+                            </a>
+                          )}
                         </div>
                         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           Billing history

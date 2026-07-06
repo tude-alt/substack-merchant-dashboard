@@ -14,6 +14,7 @@ const SUBSCRIBER_STATUS: Record<string, Tone> = {
   active: "success",
   suspended: "danger",
   cancelled: "muted",
+  pending_payment: "warning",
 }
 
 const CHARGE_STATUS: Record<string, Tone> = {
@@ -21,6 +22,7 @@ const CHARGE_STATUS: Record<string, Tone> = {
   success: "success",
   failed: "danger",
   pending: "warning",
+  none: "muted",
 }
 
 export function StatusPill({
@@ -49,7 +51,7 @@ export function StatusPill({
           tone === "info" && "bg-primary",
         )}
       />
-      {status}
+      {status.replace(/_/g, " ")}
     </span>
   )
 }

@@ -22,6 +22,8 @@ export default async function SubscribersPage() {
           billingDate: s.billingDate,
           lastChargeResult: s.lastChargeResult,
           mrr: s.mrr,
+          hasTokenizedCard: Boolean(s.nombaTokenKey),
+          checkoutLink: s.checkoutLink,
         }))}
       />
     </div>

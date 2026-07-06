@@ -3,7 +3,9 @@
 import { db } from "@/lib/db"
 import { transaction, subscriber, activity } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
-import { and, desc, eq, gte, lte, count } from "drizzle-orm"
+import { chargeSubscriberViaNomba } from "@/lib/billing"
+import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
+import { and, desc, eq, gte, lte, count, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 const PAGE_SIZE = 12
@@ -53,14 +55,35 @@ export async function getTransactions(opts: {
 
 export async function getFailedPayments() {
   const userId = await getUserId()
+  // Failed charges that have not since been superseded by a newer attempt for
+  // the same subscriber (history rows stay failed; this is the action list).
   return db
     .select()
     .from(transaction)
-    .where(and(eq(transaction.userId, userId), eq(transaction.status, "failed")))
+    .where(
+      and(
+        eq(transaction.userId, userId),
+        eq(transaction.status, "failed"),
+        sql`NOT EXISTS (
+          SELECT 1 FROM "transaction" t2
+          WHERE t2."subscriberId" = ${transaction.subscriberId}
+            AND t2."userId" = ${userId}
+            AND t2."id" > ${transaction.id}
+        )`,
+      ),
+    )
     .orderBy(desc(transaction.createdAt))
 }
 
-export async function retryCharge(transactionId: number) {
+export type RetryChargeResult =
+  | { ok: true; nombaRef: string; status: string }
+  | { ok: false; error: string }
+
+/**
+ * Manual retry = a real Nomba tokenized-card charge attempt. The result shown
+ * in the UI is whatever Nomba actually returned; failures stay failures.
+ */
+export async function retryCharge(transactionId: number): Promise<RetryChargeResult> {
   const userId = await getUserId()
   const [tx] = await db
     .select()
@@ -69,40 +92,27 @@ export async function retryCharge(transactionId: number) {
       and(eq(transaction.id, transactionId), eq(transaction.userId, userId)),
     )
     .limit(1)
-  if (!tx) return
-
-  // Simulate a manual retry succeeding.
-  await db
-    .update(transaction)
-    .set({
-      status: "successful",
-      failureReason: null,
-      nextRetryDate: null,
-      retryCount: tx.retryCount + 1,
-    })
-    .where(eq(transaction.id, transactionId))
-
-  if (tx.subscriberId) {
-    await db
-      .update(subscriber)
-      .set({ status: "active", lastChargeResult: "successful" })
-      .where(
-        and(
-          eq(subscriber.id, tx.subscriberId),
-          eq(subscriber.userId, userId),
-        ),
-      )
+  if (!tx) return { ok: false, error: "Transaction not found." }
+  if (!tx.subscriberId) {
+    return { ok: false, error: "Transaction has no linked subscriber to charge." }
   }
 
-  await db.insert(activity).values({
-    userId,
-    type: "charge.retried",
-    message: `Manual retry succeeded for ${tx.customerName} — charge recovered`,
-  })
+  try {
+    const outcome = await chargeSubscriberViaNomba(userId, tx.subscriberId, {
+      retryOfTransactionId: tx.id,
+    })
 
-  revalidatePath("/dashboard")
-  revalidatePath("/dashboard/transactions")
-  revalidatePath("/dashboard/subscribers")
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/transactions")
+    revalidatePath("/dashboard/subscribers")
+
+    if (outcome.ok) {
+      return { ok: true, nombaRef: outcome.nombaRef, status: outcome.status }
+    }
+    return { ok: false, error: outcome.failureReason }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
 }
 
 export async function cancelCharge(transactionId: number) {
@@ -137,6 +147,14 @@ export async function cancelCharge(transactionId: number) {
     userId,
     type: "subscription.cancelled",
     message: `Subscription cancelled for ${tx.customerName} after failed charge`,
+  })
+
+  await dispatchMerchantWebhook(userId, "subscription.cancelled", {
+    transaction_id: tx.id,
+    subscriber_id: tx.subscriberId,
+    customer_name: tx.customerName,
+    plan_name: tx.planName,
+    reason: "cancelled_after_failed_charge",
   })
 
   revalidatePath("/dashboard")

@@ -1,15 +1,17 @@
 "use server"
 
+import crypto from "crypto"
 import { db } from "@/lib/db"
 import { merchant } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
+import { verifyNombaCredentials } from "@/lib/nomba"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 function genApiKey(prefix: string) {
-  const body = Array.from({ length: 24 }, () =>
-    Math.floor(Math.random() * 36).toString(36),
-  ).join("")
+  // These keys now authenticate real API requests — use a CSPRNG.
+  const bytes = crypto.randomBytes(18)
+  const body = BigInt(`0x${bytes.toString("hex")}`).toString(36).slice(0, 24)
   return `${prefix}_${body}`
 }
 
@@ -50,76 +52,31 @@ export async function saveBusinessInfo(input: {
 }
 
 /**
- * Get the active Nomba credentials (test or live) from environment variables.
- * Prefer live if available; fall back to test.
- * This is not a server action, just a helper function.
+ * Verify Nomba credentials with a real token issue call
+ * (POST /v1/auth/token/issue). Marks the merchant connected only when Nomba
+ * actually accepts the credentials; otherwise surfaces Nomba's real error.
  */
-function getNombaCredentials() {
-  // Check for live credentials first
-  if (
-    process.env.NOMBA_CLIENT_ID &&
-    process.env.NOMBA_PRIVATE_KEY &&
-    process.env.NOMBA_ACCOUNT_ID
-  ) {
-    return {
-      clientId: process.env.NOMBA_CLIENT_ID,
-      privateKey: process.env.NOMBA_PRIVATE_KEY,
-      accountId: process.env.NOMBA_ACCOUNT_ID,
-      mode: "live" as const,
-    }
-  }
-
-  // Fall back to test credentials
-  if (
-    process.env.NOMBA_TEST_CLIENT_ID &&
-    process.env.NOMBA_TEST_PRIVATE_KEY &&
-    process.env.NOMBA_TEST_ACCOUNT_ID
-  ) {
-    return {
-      clientId: process.env.NOMBA_TEST_CLIENT_ID,
-      privateKey: process.env.NOMBA_TEST_PRIVATE_KEY,
-      accountId: process.env.NOMBA_TEST_ACCOUNT_ID,
-      mode: "test" as const,
-    }
-  }
-
-  return null
-}
-
 export async function connectNomba() {
   const userId = await getUserId()
   await getMerchant()
 
-  const nomba = getNombaCredentials()
-  if (!nomba) {
-    return { ok: false, error: "Nomba credentials not configured." }
-  }
-
-  // Verify credentials by calling Nomba's API with proper authentication headers.
-  // Using a simple account info endpoint to validate the credentials.
   try {
-    const response = await fetch("https://api.nomba.com/v1/accounts", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${nomba.privateKey}`,
-        "X-Account-Id": nomba.accountId,
-        "Content-Type": "application/json",
-      },
-    })
-
-    const ok = response.ok
-    if (ok) {
+    const result = await verifyNombaCredentials()
+    if (result.ok) {
       await db
         .update(merchant)
         .set({ nombaConnected: true })
         .where(eq(merchant.userId, userId))
-    } else {
-      console.error("[v0] Nomba API error:", response.status, await response.text())
+      return { ok: true as const }
     }
-    return { ok, error: !ok ? `API returned ${response.status}` : undefined }
+    console.error("[nomba] credential verification failed:", result.error)
+    return { ok: false as const, error: result.error }
   } catch (error) {
-    console.error("[v0] Nomba connection failed:", error)
-    return { ok: false, error: "Connection failed. Verify your credentials are set in environment variables." }
+    console.error("[nomba] connection failed:", error)
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : String(error),
+    }
   }
 }
 

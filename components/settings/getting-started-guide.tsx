@@ -38,23 +38,29 @@ export function GettingStartedGuide() {
         </div>
 
         <div>
-          <h3 className="mb-2 font-medium text-foreground">Python example</h3>
+          <h3 className="mb-2 font-medium text-foreground">
+            Create a subscriber via the API
+          </h3>
+          <p className="mb-2">
+            POST to <code className="font-mono text-xs">/api/v1/subscribers</code>{" "}
+            with your key. This persists the subscriber and creates a real Nomba
+            checkout order (card tokenization enabled) — the response includes
+            the live checkout link for the customer&apos;s first payment.
+          </p>
           <div className="rounded-lg border border-border bg-muted/40 p-3">
             <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-foreground">
-{`import os
-import requests
+{`curl -X POST https://<your-domain>/api/v1/subscribers \\
+  -H "Authorization: Bearer sk_test_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Ada Obi",
+    "email": "ada@example.com",
+    "phone": "+2348012345678",
+    "plan_id": 1
+  }'
 
-api_key = os.getenv("SUBSTACK_API_KEY", "your-key-here")
-url = "https://your-domain.example.com/api/merchant"
-
-response = requests.get(
-    url,
-    headers={"Authorization": f"Bearer {api_key}"},
-    timeout=10,
-)
-
-print(response.status_code)
-print(response.text)`}
+# 201 -> { "data": { "id": ..., "status": "pending_payment",
+#          "checkout_link": "https://checkout.nomba.com/..." } }`}
             </pre>
           </div>
         </div>
