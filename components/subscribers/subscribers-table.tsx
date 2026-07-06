@@ -132,12 +132,11 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
         setBanner({ kind: "error", text: `Charge for ${s.name} failed: ${res.error}` })
       }
       setChargingId(null)
-      // Refresh cached history so the new real transaction appears.
-      setHistoryCache((c) => {
-        const next = { ...c }
-        delete next[s.id]
-        return next
-      })
+      // Refresh the history so the new real transaction appears.
+      setLoadingId(s.id)
+      const rows = await getSubscriberHistory(s.id)
+      setHistoryCache((c) => ({ ...c, [s.id]: rows as HistoryRow[] }))
+      setLoadingId(null)
     })
   }
 
