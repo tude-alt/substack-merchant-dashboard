@@ -20,6 +20,7 @@ export function getAppUrl(): string {
 }
 
 export function monthlyMrrKobo(amountKobo: number, interval: string): number {
+  if (interval === "weekly") return Math.round((amountKobo * 52) / 12)
   if (interval === "quarterly") return Math.round(amountKobo / 3)
   if (interval === "annual") return Math.round(amountKobo / 12)
   return amountKobo
@@ -27,7 +28,8 @@ export function monthlyMrrKobo(amountKobo: number, interval: string): number {
 
 export function nextBillingDate(from: Date, interval: string): Date {
   const d = new Date(from)
-  if (interval === "quarterly") d.setMonth(d.getMonth() + 3)
+  if (interval === "weekly") d.setDate(d.getDate() + 7)
+  else if (interval === "quarterly") d.setMonth(d.getMonth() + 3)
   else if (interval === "annual") d.setFullYear(d.getFullYear() + 1)
   else d.setMonth(d.getMonth() + 1)
   return d

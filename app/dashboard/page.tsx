@@ -3,6 +3,8 @@ import { KpiStrip } from "@/components/dashboard/kpi-strip"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { FailedPaymentsTable } from "@/components/dashboard/failed-payments-table"
+import { MonitoringAlerts } from "@/components/dashboard/monitoring-alerts"
+import { PlanMonitoringTable } from "@/components/dashboard/plan-monitoring-table"
 import { getDashboardData } from "@/app/actions/dashboard"
 import { getFailedPayments } from "@/app/actions/transactions"
 
@@ -19,7 +21,11 @@ export default async function DashboardPage() {
         description="An overview of your recurring revenue and billing health."
       />
 
+      <MonitoringAlerts alerts={data.monitoringAlerts} />
+
       <KpiStrip data={data} />
+
+      <PlanMonitoringTable rows={data.planMonitoring} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

@@ -7,6 +7,7 @@ import {
   integer,
   bigint,
   unique,
+  date,
 } from "drizzle-orm/pg-core"
 
 // ---------------------------------------------------------------------------
@@ -167,3 +168,19 @@ export const webhookDelivery = pgTable("webhook_delivery", {
   error: text("error"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
+
+/** Daily per-plan MRR snapshots for monitoring trends. */
+export const planMetricSnapshot = pgTable(
+  "plan_metric_snapshot",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("userId").notNull(),
+    planId: integer("planId").notNull(),
+    snapshotDate: date("snapshotDate").notNull(),
+    mrr: bigint("mrr", { mode: "number" }).notNull().default(0),
+    activeSubscribers: integer("activeSubscribers").notNull().default(0),
+    monitoringEnabled: boolean("monitoringEnabled").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.planId, t.snapshotDate)],
+)
