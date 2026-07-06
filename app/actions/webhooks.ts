@@ -3,7 +3,7 @@
 import { db } from "@/lib/db"
 import { webhookDelivery } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
-import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
+import { dispatchMerchantWebhook, formatWebhookTestResult } from "@/lib/webhook-dispatch"
 import { desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -28,11 +28,6 @@ export type TestWebhookResult =
       error?: string
     }
 
-/**
- * Sends a REAL HTTP POST to the merchant's configured endpoint. The recorded
- * status code and response time come from the receiving server's actual
- * response; failures retry with backoff and every attempt is logged.
- */
 export async function sendTestWebhook(): Promise<TestWebhookResult> {
   const userId = await getUserId()
 
@@ -40,6 +35,10 @@ export async function sendTestWebhook(): Promise<TestWebhookResult> {
     userId,
     "test.ping",
     {
+      subscriber_id: null,
+      email: "",
+      plan_id: null,
+      amount: 0,
       message: "Subflow webhook test — this request was sent over the network to your endpoint.",
     },
     { bypassSubscriptionFilter: true },
@@ -47,17 +46,17 @@ export async function sendTestWebhook(): Promise<TestWebhookResult> {
 
   revalidatePath("/dashboard/settings")
 
-  if (!result.sent) {
-    return { ok: false, error: result.reason }
+  const formatted = formatWebhookTestResult(result)
+  if (!formatted.ok && "error" in formatted) {
+    return { ok: false, error: formatted.error }
   }
 
-  const last = result.attempts[result.attempts.length - 1]
   return {
-    ok: result.delivered,
-    delivered: result.delivered,
-    statusCode: last.statusCode,
-    responseTimeMs: last.responseTimeMs,
-    attempts: result.attempts.length,
-    error: last.error ?? undefined,
+    ok: formatted.delivered,
+    delivered: formatted.delivered,
+    statusCode: formatted.status_code,
+    responseTimeMs: formatted.response_time_ms,
+    attempts: formatted.attempts,
+    error: formatted.error,
   }
 }

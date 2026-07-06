@@ -1,14 +1,14 @@
 import { getMerchant } from "@/app/actions/merchant"
+import { getPlansWithStats } from "@/app/actions/plans"
 import { getWebhookDeliveries } from "@/app/actions/webhooks"
 import { PageHeader } from "@/components/page-header"
-import { ApiKeysSection } from "@/components/settings/api-keys-section"
-import { GettingStartedGuide } from "@/components/settings/getting-started-guide"
-import { WebhookSection } from "@/components/settings/webhook-section"
+import { IntegrationsSection } from "@/components/settings/integrations-section"
 
 export default async function SettingsPage() {
-  const [merchant, deliveries] = await Promise.all([
+  const [merchant, deliveries, plans] = await Promise.all([
     getMerchant(),
     getWebhookDeliveries(),
+    getPlansWithStats(),
   ])
 
   const selectedEvents = merchant.webhookEvents
@@ -19,16 +19,20 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Settings"
-        description="Manage your API credentials and webhook delivery."
+        description="API credentials, plan IDs, webhooks, and integration testing."
       />
-      <GettingStartedGuide />
-      <ApiKeysSection
+      <IntegrationsSection
         liveApiKey={merchant.liveApiKey}
         testApiKey={merchant.testApiKey}
-      />
-      <WebhookSection
+        webhookSecret={merchant.webhookSecret}
         webhookUrl={merchant.webhookUrl}
         selectedEvents={selectedEvents}
+        plans={plans.map((p) => ({
+          id: p.id,
+          name: p.name,
+          amount: p.amount,
+          interval: p.interval,
+        }))}
         deliveries={deliveries}
       />
     </div>

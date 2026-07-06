@@ -6,6 +6,7 @@ import {
   serial,
   integer,
   bigint,
+  unique,
 } from "drizzle-orm/pg-core"
 
 // ---------------------------------------------------------------------------
@@ -76,6 +77,7 @@ export const merchant = pgTable("merchant", {
   testApiKey: text("testApiKey").notNull().default(""),
   webhookUrl: text("webhookUrl").notNull().default(""),
   webhookEvents: text("webhookEvents").notNull().default(""),
+  webhookSecret: text("webhookSecret").notNull().default(""),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
@@ -138,6 +140,19 @@ export const activity = pgTable("activity", {
   message: text("message").notNull(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
+
+export const apiIdempotency = pgTable(
+  "api_idempotency",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("userId").notNull(),
+    idempotencyKey: text("idempotencyKey").notNull(),
+    statusCode: integer("statusCode").notNull(),
+    responseBody: text("responseBody").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.idempotencyKey)],
+)
 
 export const webhookDelivery = pgTable("webhook_delivery", {
   id: serial("id").primaryKey(),

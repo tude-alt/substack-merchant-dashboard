@@ -190,14 +190,9 @@ async function handlePaymentSuccess(
 
       await dispatchMerchantWebhook(sub.userId, "charge.success", {
         subscriber_id: sub.id,
-        customer_email: sub.email,
+        email: sub.email,
         plan_id: sub.planId,
-        plan_name: sub.planName,
-        amount_kobo: amount,
-        nomba_reference: nombaTransactionId || orderReference,
-        order_reference: orderReference,
-        initial_payment: true,
-        card_tokenized: Boolean(tokenKey && tokenKey !== "N/A"),
+        amount,
       })
       return
     }
@@ -213,6 +208,7 @@ async function handlePaymentSuccess(
       .limit(1)
 
     if (tx && tx.status !== "successful") {
+      let subForWebhook: (typeof subscriber.$inferSelect) | undefined
       await db
         .update(transaction)
         .set({
@@ -229,6 +225,7 @@ async function handlePaymentSuccess(
           .from(subscriber)
           .where(eq(subscriber.id, tx.subscriberId))
           .limit(1)
+        subForWebhook = sub
         if (sub) {
           const [p] = sub.planId
             ? await db.select().from(plan).where(eq(plan.id, sub.planId)).limit(1)
@@ -253,11 +250,10 @@ async function handlePaymentSuccess(
       })
 
       await dispatchMerchantWebhook(tx.userId, "charge.success", {
-        transaction_id: tx.id,
         subscriber_id: tx.subscriberId,
-        plan_name: tx.planName,
-        amount_kobo: tx.amount,
-        nomba_reference: nombaTransactionId || tx.nombaRef,
+        email: subForWebhook?.email ?? "",
+        plan_id: subForWebhook?.planId ?? null,
+        amount: tx.amount,
       })
       return
     }
@@ -314,12 +310,14 @@ async function handlePaymentFailed(data: {
   let nextRetry: Date | null = null
   let retriesRemaining = false
   let suspend = false
+  let subForWebhook: (typeof subscriber.$inferSelect) | undefined
   if (tx.subscriberId) {
     const [sub] = await db
       .select()
       .from(subscriber)
       .where(eq(subscriber.id, tx.subscriberId))
       .limit(1)
+    subForWebhook = sub
     const [p] = sub?.planId
       ? await db.select().from(plan).where(eq(plan.id, sub.planId)).limit(1)
       : [undefined]
@@ -355,12 +353,11 @@ async function handlePaymentFailed(data: {
   })
 
   await dispatchMerchantWebhook(tx.userId, "charge.failed", {
-    transaction_id: tx.id,
     subscriber_id: tx.subscriberId,
-    plan_name: tx.planName,
-    amount_kobo: tx.amount,
-    failure_reason: reason,
-    nomba_reference: nombaTransactionId || tx.nombaRef,
-    next_retry_date: nextRetry?.toISOString() ?? null,
+    email: subForWebhook?.email ?? "",
+    plan_id: subForWebhook?.planId ?? null,
+    amount: tx.amount,
+    attempt: tx.retryCount + 1,
+    final_attempt: suspend,
   })
 }

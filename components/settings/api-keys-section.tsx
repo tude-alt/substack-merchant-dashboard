@@ -129,23 +129,35 @@ function KeyRow({ id, label, badge, badgeClass, value, which }: KeyRowProps) {
 export function ApiKeysSection({
   liveApiKey,
   testApiKey,
+  embedded = false,
 }: {
   liveApiKey: string
   testApiKey: string
+  embedded?: boolean
 }) {
-  return (
-    <Card className="p-5">
-      <div className="mb-5 flex items-center gap-2">
-        <div className="rounded-md bg-primary/15 p-2">
-          <KeyRound className="h-4 w-4 text-primary" />
+  const content = (
+    <>
+      {!embedded && (
+        <div className="mb-5 flex items-center gap-2">
+          <div className="rounded-md bg-primary/15 p-2">
+            <KeyRound className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-foreground">API Keys</h2>
+            <p className="text-sm text-muted-foreground">
+              Use these to authenticate requests to the Subflow API.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-semibold text-foreground">API Keys</h2>
+      )}
+      {embedded && (
+        <div className="mb-3">
+          <h3 className="text-sm font-medium text-foreground">API keys</h3>
           <p className="text-sm text-muted-foreground">
-            Use these to authenticate requests to the Subflow API.
+            Set <code className="font-mono text-xs">SUBFLOW_API_KEY</code> to your test or live key.
           </p>
         </div>
-      </div>
+      )}
       <div className="space-y-6">
         <KeyRow
           id="live-key"
@@ -164,6 +176,10 @@ export function ApiKeysSection({
           which="test"
         />
       </div>
-    </Card>
+    </>
   )
+
+  if (embedded) return content
+
+  return <Card className="p-5">{content}</Card>
 }
