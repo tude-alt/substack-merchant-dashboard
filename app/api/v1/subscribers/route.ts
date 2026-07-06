@@ -8,6 +8,7 @@ import {
 } from "@/lib/api/create-subscriber"
 import {
   apiError,
+  apiInternalError,
   apiInvalidRequest,
   apiPlanNotFound,
   apiUnauthorized,
@@ -20,6 +21,43 @@ import {
 import { db } from "@/lib/db"
 import { subscriber } from "@/lib/db/schema"
 import { desc, eq } from "drizzle-orm"
+
+function isMissingRelationError(e: unknown, relation: string): boolean {
+  if (!(e instanceof Error)) return false
+  const msg = e.message.toLowerCase()
+  return msg.includes(`relation "${relation}" does not exist`) || msg.includes(`relation ${relation} does not exist`)
+}
+
+function isMissingColumnError(e: unknown): boolean {
+  if (!(e instanceof Error)) return false
+  return e.message.toLowerCase().includes("column") && e.message.toLowerCase().includes("does not exist")
+}
+
+function mapUnhandledCreateError(e: unknown) {
+  if (e instanceof PlanNotFoundError) {
+    return apiPlanNotFound(e.planId)
+  }
+  if (e instanceof NombaConfigError) {
+    return apiError("nomba_not_configured", e.message, 503)
+  }
+  if (e instanceof NombaApiError) {
+    return apiError("nomba_error", e.message, 502, {
+      nomba: { http_status: e.httpStatus, code: e.code, description: e.description },
+    })
+  }
+  if (isMissingRelationError(e, "api_idempotency") || isMissingColumnError(e)) {
+    return apiInternalError(
+      "Database schema is out of date for subscriber creation. " +
+        "Run `node scripts/migrate.mjs` against your DATABASE_URL (see README), then retry.",
+      {
+        hint: "POST /api/v1/subscribers needs api_idempotency and subscriber checkout columns added by scripts/migrate.mjs.",
+      },
+    )
+  }
+
+  console.error("[api] POST /api/v1/subscribers failed:", e)
+  return apiInternalError()
+}
 
 export async function GET(request: Request) {
   const auth = await authenticateMerchant(request)
@@ -41,15 +79,6 @@ export async function POST(request: Request) {
   if (!auth) return apiUnauthorized()
 
   const idempotencyKey = request.headers.get("Idempotency-Key")?.trim() ?? ""
-  if (idempotencyKey) {
-    const cached = await getIdempotentResponse(auth.merchant.userId, idempotencyKey)
-    if (cached) {
-      return new Response(cached.responseBody, {
-        status: cached.statusCode,
-        headers: { "Content-Type": "application/json" },
-      })
-    }
-  }
 
   let body: Record<string, unknown>
   try {
@@ -66,6 +95,23 @@ export async function POST(request: Request) {
   const { name, email, phone, planId } = parsed
 
   try {
+    if (idempotencyKey) {
+      try {
+        const cached = await getIdempotentResponse(auth.merchant.userId, idempotencyKey)
+        if (cached) {
+          return new Response(cached.responseBody, {
+            status: cached.statusCode,
+            headers: { "Content-Type": "application/json" },
+          })
+        }
+      } catch (e) {
+        if (isMissingRelationError(e, "api_idempotency")) {
+          return mapUnhandledCreateError(e)
+        }
+        console.error("[api] idempotency lookup failed; continuing without cache:", e)
+      }
+    }
+
     const result = await createSubscriberForMerchant({
       userId: auth.merchant.userId,
       mode: auth.mode,
@@ -82,12 +128,20 @@ export async function POST(request: Request) {
     const responseBody = JSON.stringify({ data })
 
     if (idempotencyKey) {
-      await storeIdempotentResponse(
-        auth.merchant.userId,
-        idempotencyKey,
-        status,
-        responseBody,
-      )
+      try {
+        await storeIdempotentResponse(
+          auth.merchant.userId,
+          idempotencyKey,
+          status,
+          responseBody,
+        )
+      } catch (e) {
+        if (isMissingRelationError(e, "api_idempotency")) {
+          console.error("[api] idempotency store skipped; subscriber was created:", e)
+        } else {
+          console.error("[api] idempotency store failed; subscriber was created:", e)
+        }
+      }
     }
 
     return new Response(responseBody, {
@@ -95,17 +149,6 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     })
   } catch (e) {
-    if (e instanceof PlanNotFoundError) {
-      return apiPlanNotFound(e.planId)
-    }
-    if (e instanceof NombaConfigError) {
-      return apiError("nomba_not_configured", e.message, 503)
-    }
-    if (e instanceof NombaApiError) {
-      return apiError("nomba_error", e.message, 502, {
-        nomba: { http_status: e.httpStatus, code: e.code, description: e.description },
-      })
-    }
-    throw e
+    return mapUnhandledCreateError(e)
   }
 }

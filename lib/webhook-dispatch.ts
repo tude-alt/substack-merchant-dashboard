@@ -108,6 +108,8 @@ export async function dispatchMerchantWebhook(
       responseTimeMs: result.responseTimeMs,
       attempt,
       error: result.error,
+    }).catch((e) => {
+      console.error("[webhook] failed to persist delivery log:", e)
     })
 
     console.log(

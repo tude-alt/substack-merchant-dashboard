@@ -125,6 +125,16 @@ async function parseNombaResponse<T>(
 type TokenCache = { accessToken: string; expiresAtMs: number }
 let tokenCache: TokenCache | null = null
 
+function nombaNetworkError(context: string, cause: unknown): NombaApiError {
+  return new NombaApiError({
+    httpStatus: 0,
+    code: "network_error",
+    description: cause instanceof Error ? cause.message : String(cause),
+    raw: null,
+    context,
+  })
+}
+
 export async function getNombaAccessToken(): Promise<string> {
   const cfg = getNombaConfig()
 
@@ -133,19 +143,24 @@ export async function getNombaAccessToken(): Promise<string> {
     return tokenCache.accessToken
   }
 
-  const res = await fetch(`${cfg.baseUrl}/v1/auth/token/issue`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      accountId: cfg.accountId,
-    },
-    body: JSON.stringify({
-      grant_type: "client_credentials",
-      client_id: cfg.clientId,
-      client_secret: cfg.clientSecret,
-    }),
-    cache: "no-store",
-  })
+  let res: Response
+  try {
+    res = await fetch(`${cfg.baseUrl}/v1/auth/token/issue`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        accountId: cfg.accountId,
+      },
+      body: JSON.stringify({
+        grant_type: "client_credentials",
+        client_id: cfg.clientId,
+        client_secret: cfg.clientSecret,
+      }),
+      cache: "no-store",
+    })
+  } catch (e) {
+    throw nombaNetworkError("token issue (POST /v1/auth/token/issue)", e)
+  }
 
   const data = await parseNombaResponse<{
     access_token: string
@@ -165,21 +180,29 @@ export async function getNombaAccessToken(): Promise<string> {
 async function nombaFetch(path: string, init: RequestInit): Promise<Response> {
   const cfg = getNombaConfig()
   const token = await getNombaAccessToken()
-  return fetch(`${cfg.baseUrl}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      accountId: cfg.accountId,
-      ...(init.headers ?? {}),
-    },
-    cache: "no-store",
-  })
+  try {
+    return await fetch(`${cfg.baseUrl}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        accountId: cfg.accountId,
+        ...(init.headers ?? {}),
+      },
+      cache: "no-store",
+    })
+  } catch (e) {
+    throw nombaNetworkError(`fetch ${path}`, e)
+  }
 }
 
-/** Amounts are stored internally in kobo; Nomba expects a naira string ("10000.00"). */
+/** Amounts are stored internally in kobo; Nomba expects a naira amount ("10000.00"). */
 export function koboToNombaAmount(kobo: number): string {
   return (Math.round(kobo) / 100).toFixed(2)
+}
+
+export function koboToNombaAmountNumber(kobo: number): number {
+  return Number(koboToNombaAmount(kobo))
 }
 
 // ---------------------------------------------------------------------------
@@ -230,7 +253,7 @@ export async function createCheckoutOrder(input: {
         orderReference: input.orderReference,
         customerId: input.customerId,
         customerEmail: input.customerEmail,
-        amount: koboToNombaAmount(input.amountKobo),
+        amount: koboToNombaAmountNumber(input.amountKobo),
         currency: input.currency,
         callbackUrl: input.callbackUrl,
         ...(cfg.subAccountId ? { accountId: cfg.subAccountId } : {}),
@@ -240,7 +263,25 @@ export async function createCheckoutOrder(input: {
       tokenizeCard: true,
     }),
   })
-  return parseNombaResponse(res, "checkout order (POST /v1/checkout/order)")
+  const data = await parseNombaResponse<{ checkoutLink?: string; orderReference?: string }>(
+    res,
+    "checkout order (POST /v1/checkout/order)",
+  )
+  if (!data.checkoutLink?.trim()) {
+    throw new NombaApiError({
+      httpStatus: res.status,
+      code: "invalid_response",
+      description:
+        "Nomba accepted the checkout order but did not return checkoutLink. " +
+        "Check Nomba dashboard logs and verify checkout is enabled for this account.",
+      raw: data,
+      context: "checkout order (POST /v1/checkout/order)",
+    })
+  }
+  return {
+    checkoutLink: data.checkoutLink,
+    orderReference: data.orderReference ?? input.orderReference,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -276,7 +317,7 @@ export async function chargeTokenizedCard(input: {
         orderReference: input.orderReference,
         customerId: input.customerId,
         customerEmail: input.customerEmail,
-        amount: koboToNombaAmount(input.amountKobo),
+        amount: koboToNombaAmountNumber(input.amountKobo),
         currency: input.currency,
         callbackUrl: input.callbackUrl,
         ...(cfg.subAccountId ? { accountId: cfg.subAccountId } : {}),
