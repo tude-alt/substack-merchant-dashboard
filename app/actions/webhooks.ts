@@ -1,8 +1,9 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { webhookDelivery, merchant } from "@/lib/db/schema"
+import { webhookDelivery } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
+import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -16,31 +17,47 @@ export async function getWebhookDeliveries() {
     .limit(20)
 }
 
-export async function sendTestWebhook() {
+export type TestWebhookResult =
+  | { ok: false; error: string }
+  | {
+      ok: boolean
+      delivered: boolean
+      statusCode: number
+      responseTimeMs: number
+      attempts: number
+      error?: string
+    }
+
+/**
+ * Sends a REAL HTTP POST to the merchant's configured endpoint. The recorded
+ * status code and response time come from the receiving server's actual
+ * response; failures retry with backoff and every attempt is logged.
+ */
+export async function sendTestWebhook(): Promise<TestWebhookResult> {
   const userId = await getUserId()
-  const [m] = await db
-    .select()
-    .from(merchant)
-    .where(eq(merchant.userId, userId))
-    .limit(1)
 
-  const endpoint = m?.webhookUrl?.trim()
-  if (!endpoint) {
-    return { ok: false as const, error: "Add a webhook endpoint URL first." }
-  }
-
-  // Simulated delivery: most succeed, with a realistic response time.
-  const responseTimeMs = 80 + Math.floor(Math.random() * 320)
-  const statusCode = Math.random() > 0.15 ? 200 : 500
-
-  await db.insert(webhookDelivery).values({
+  const result = await dispatchMerchantWebhook(
     userId,
-    endpoint,
-    event: "charge.success",
-    statusCode,
-    responseTimeMs,
-  })
+    "test.ping",
+    {
+      message: "Subflow webhook test — this request was sent over the network to your endpoint.",
+    },
+    { bypassSubscriptionFilter: true },
+  )
 
   revalidatePath("/dashboard/settings")
-  return { ok: statusCode === 200, statusCode, responseTimeMs }
+
+  if (!result.sent) {
+    return { ok: false, error: result.reason }
+  }
+
+  const last = result.attempts[result.attempts.length - 1]
+  return {
+    ok: result.delivered,
+    delivered: result.delivered,
+    statusCode: last.statusCode,
+    responseTimeMs: last.responseTimeMs,
+    attempts: result.attempts.length,
+    error: last.error ?? undefined,
+  }
 }

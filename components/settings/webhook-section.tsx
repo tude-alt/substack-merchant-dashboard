@@ -34,6 +34,8 @@ type Delivery = {
   event: string
   statusCode: number
   responseTimeMs: number
+  attempt: number
+  error: string | null
   createdAt: Date | string
 }
 
@@ -75,17 +77,22 @@ export function WebhookSection({
     setBanner(null)
     startTest(async () => {
       const res = await sendTestWebhook()
-      if (!res.ok && "error" in res && res.error) {
+      if (!("statusCode" in res)) {
         setBanner({ kind: "error", text: res.error })
-      } else if (res.ok) {
+      } else if (res.delivered) {
         setBanner({
           kind: "success",
-          text: `Test event delivered — 200 OK in ${res.responseTimeMs}ms.`,
+          text: `Delivered — your endpoint responded ${res.statusCode} in ${res.responseTimeMs}ms (attempt ${res.attempts}).`,
+        })
+      } else if (res.statusCode === 0) {
+        setBanner({
+          kind: "error",
+          text: `Delivery failed after ${res.attempts} attempts — no HTTP response from endpoint (${res.error ?? "network error"}).`,
         })
       } else {
         setBanner({
           kind: "error",
-          text: `Endpoint responded with ${res.statusCode}. Check your handler.`,
+          text: `Delivery failed after ${res.attempts} attempts — endpoint responded ${res.statusCode}. Check your handler.`,
         })
       }
       router.refresh()
@@ -183,6 +190,7 @@ export function WebhookSection({
                   <TableHead>Endpoint</TableHead>
                   <TableHead>Event</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Attempt</TableHead>
                   <TableHead className="text-right">Response</TableHead>
                   <TableHead>Time</TableHead>
                 </TableRow>
@@ -190,7 +198,7 @@ export function WebhookSection({
               <TableBody>
                 {deliveries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <div className="flex flex-col items-center justify-center py-10 text-center">
                         <Radio className="mb-2 h-7 w-7 text-muted-foreground" />
                         <p className="text-sm font-medium text-foreground">
@@ -216,14 +224,18 @@ export function WebhookSection({
                       </TableCell>
                       <TableCell>
                         <span
+                          title={d.error ?? undefined}
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                             d.statusCode >= 200 && d.statusCode < 300
                               ? "bg-[var(--success)]/15 text-[var(--success)]"
                               : "bg-destructive/15 text-destructive"
                           }`}
                         >
-                          {d.statusCode}
+                          {d.statusCode === 0 ? "no response" : d.statusCode}
                         </span>
+                      </TableCell>
+                      <TableCell className="tabular-nums text-muted-foreground">
+                        #{d.attempt}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {d.responseTimeMs}ms

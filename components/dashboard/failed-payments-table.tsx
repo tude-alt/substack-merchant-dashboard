@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table"
 import { formatNaira, formatDate } from "@/lib/format"
 import { retryCharge, cancelCharge } from "@/app/actions/transactions"
-import { RefreshCw, X, CheckCircle2, Undo2 } from "lucide-react"
+import { RefreshCw, X, CheckCircle2, AlertCircle } from "lucide-react"
 
 type FailedTx = {
   id: number
@@ -25,47 +25,48 @@ type FailedTx = {
   nextRetryDate: Date | null
 }
 
-type PendingAction = {
-  id: number
-  kind: "retry" | "cancel"
-  timer: ReturnType<typeof setTimeout>
-}
-
 export function FailedPaymentsTable({ rows }: { rows: FailedTx[] }) {
   const [isPending, startTransition] = useTransition()
-  // Rows currently in the "undo" window (optimistically hidden).
-  const [pending, setPending] = useState<Record<number, PendingAction>>({})
-  // Rows awaiting inline confirmation for cancel.
+  const [busyId, setBusyId] = useState<number | null>(null)
   const [confirming, setConfirming] = useState<number | null>(null)
+  const [banner, setBanner] = useState<
+    { kind: "success" | "error"; text: string } | null
+  >(null)
 
-  function commit(id: number, kind: "retry" | "cancel") {
-    const timer = setTimeout(() => {
-      startTransition(async () => {
-        if (kind === "retry") await retryCharge(id)
-        else await cancelCharge(id)
-      })
-      setPending((p) => {
-        const next = { ...p }
-        delete next[id]
-        return next
-      })
-    }, 5000)
-    setPending((p) => ({ ...p, [id]: { id, kind, timer } }))
-    setConfirming(null)
-  }
-
-  function undo(id: number) {
-    setPending((p) => {
-      const action = p[id]
-      if (action) clearTimeout(action.timer)
-      const next = { ...p }
-      delete next[id]
-      return next
+  function doRetry(row: FailedTx) {
+    setBanner(null)
+    setBusyId(row.id)
+    startTransition(async () => {
+      // Real Nomba charge attempt — the banner shows Nomba's actual outcome.
+      const res = await retryCharge(row.id)
+      if (res.ok) {
+        setBanner({
+          kind: "success",
+          text: `Retry for ${row.customerName} ${res.status === "successful" ? "succeeded" : "accepted (pending confirmation)"} — Nomba ref ${res.nombaRef}`,
+        })
+      } else {
+        setBanner({
+          kind: "error",
+          text: `Retry for ${row.customerName} failed: ${res.error}`,
+        })
+      }
+      setBusyId(null)
     })
   }
 
-  const visible = rows.filter((r) => !pending[r.id])
-  const pendingList = Object.values(pending)
+  function doCancel(row: FailedTx) {
+    setBanner(null)
+    setBusyId(row.id)
+    setConfirming(null)
+    startTransition(async () => {
+      await cancelCharge(row.id)
+      setBanner({
+        kind: "success",
+        text: `Subscription cancelled for ${row.customerName}.`,
+      })
+      setBusyId(null)
+    })
+  }
 
   return (
     <Card className="overflow-hidden">
@@ -80,34 +81,23 @@ export function FailedPaymentsTable({ rows }: { rows: FailedTx[] }) {
         </div>
       </div>
 
-      {/* Undo banners */}
-      {pendingList.map((a) => {
-        const row = rows.find((r) => r.id === a.id)
-        if (!row) return null
-        return (
-          <div
-            key={a.id}
-            className="flex items-center justify-between border-b border-border bg-secondary px-5 py-2.5 text-sm"
-          >
-            <span className="text-secondary-foreground">
-              {a.kind === "retry"
-                ? `Retrying charge for ${row.customerName}…`
-                : `Cancelling ${row.customerName}'s subscription…`}
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => undo(a.id)}
-              className="h-7 gap-1.5 text-primary"
-            >
-              <Undo2 className="h-3.5 w-3.5" />
-              Undo
-            </Button>
-          </div>
-        )
-      })}
+      {banner && (
+        <div
+          role="alert"
+          className={`flex items-start gap-2 border-b border-border px-5 py-2.5 text-sm ${
+            banner.kind === "success" ? "text-success" : "text-destructive"
+          }`}
+        >
+          {banner.kind === "success" ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          ) : (
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          )}
+          <span className="min-w-0 break-words">{banner.text}</span>
+        </div>
+      )}
 
-      {visible.length === 0 && pendingList.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-5 py-12 text-center">
           <CheckCircle2 className="mb-2 h-7 w-7 text-success" />
           <p className="text-sm font-medium text-foreground">
@@ -133,7 +123,7 @@ export function FailedPaymentsTable({ rows }: { rows: FailedTx[] }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((row) => (
+              {rows.map((row) => (
                 <TableRow key={row.id} className="hover:bg-accent/40">
                   <TableCell>
                     <div className="font-medium text-foreground">
@@ -146,8 +136,8 @@ export function FailedPaymentsTable({ rows }: { rows: FailedTx[] }) {
                   <TableCell className="font-medium text-foreground">
                     {formatNaira(row.amount)}
                   </TableCell>
-                  <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
-                    {row.failureReason ?? "—"}
+                  <TableCell className="hidden max-w-[280px] text-sm text-muted-foreground md:table-cell">
+                    <span className="line-clamp-2">{row.failureReason ?? "—"}</span>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     <span className="text-sm text-foreground">
@@ -168,7 +158,7 @@ export function FailedPaymentsTable({ rows }: { rows: FailedTx[] }) {
                           variant="destructive"
                           className="h-7"
                           disabled={isPending}
-                          onClick={() => commit(row.id, "cancel")}
+                          onClick={() => doCancel(row)}
                         >
                           Confirm
                         </Button>
@@ -188,15 +178,18 @@ export function FailedPaymentsTable({ rows }: { rows: FailedTx[] }) {
                           variant="secondary"
                           className="h-7 gap-1.5"
                           disabled={isPending}
-                          onClick={() => commit(row.id, "retry")}
+                          onClick={() => doRetry(row)}
                         >
-                          <RefreshCw className="h-3.5 w-3.5" />
-                          Retry
+                          <RefreshCw
+                            className={`h-3.5 w-3.5 ${busyId === row.id ? "animate-spin" : ""}`}
+                          />
+                          {busyId === row.id ? "Charging…" : "Retry"}
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           className="h-7 gap-1.5 text-destructive hover:text-destructive"
+                          disabled={isPending}
                           onClick={() => setConfirming(row.id)}
                         >
                           <X className="h-3.5 w-3.5" />

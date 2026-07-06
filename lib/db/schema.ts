@@ -101,10 +101,17 @@ export const subscriber = pgTable("subscriber", {
   phone: text("phone").notNull().default(""),
   planId: integer("planId"),
   planName: text("planName").notNull().default(""),
-  status: text("status").notNull().default("active"),
+  // "pending_payment" until the customer completes the initial Nomba checkout;
+  // never born "active" with a fabricated successful charge.
+  status: text("status").notNull().default("pending_payment"),
   billingDate: timestamp("billingDate").notNull().defaultNow(),
-  lastChargeResult: text("lastChargeResult").notNull().default("successful"),
+  lastChargeResult: text("lastChargeResult").notNull().default("none"),
   mrr: bigint("mrr", { mode: "number" }).notNull().default(0),
+  // Card token issued by Nomba in the payment_success webhook (tokenizedCardData.tokenKey).
+  nombaTokenKey: text("nombaTokenKey"),
+  // orderReference of the initial tokenizing checkout order, used to correlate the webhook.
+  initOrderReference: text("initOrderReference"),
+  checkoutLink: text("checkoutLink"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
@@ -115,7 +122,8 @@ export const transaction = pgTable("transaction", {
   customerName: text("customerName").notNull().default(""),
   planName: text("planName").notNull().default(""),
   amount: bigint("amount", { mode: "number" }).notNull().default(0),
-  status: text("status").notNull().default("successful"),
+  // Status must always be written explicitly from a real charge outcome.
+  status: text("status").notNull().default("pending"),
   nombaRef: text("nombaRef").notNull().default(""),
   failureReason: text("failureReason"),
   retryCount: integer("retryCount").notNull().default(0),
@@ -136,7 +144,11 @@ export const webhookDelivery = pgTable("webhook_delivery", {
   userId: text("userId").notNull(),
   endpoint: text("endpoint").notNull().default(""),
   event: text("event").notNull(),
-  statusCode: integer("statusCode").notNull().default(200),
+  // Real HTTP status returned by the merchant's endpoint. 0 means the request
+  // never got an HTTP response (DNS failure, connection refused, timeout).
+  statusCode: integer("statusCode").notNull().default(0),
   responseTimeMs: integer("responseTimeMs").notNull().default(0),
+  attempt: integer("attempt").notNull().default(1),
+  error: text("error"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
