@@ -76,6 +76,10 @@ export function getNombaConfig() {
     clientId: process.env.NOMBA_CLIENT_ID!.trim(),
     clientSecret: process.env.NOMBA_PRIVATE_KEY!.trim(),
     accountId: process.env.NOMBA_ACCOUNT_ID!.trim(),
+    // Optional outlet/sub-account to scope orders to. Nomba: authenticate with
+    // the parent accountId header, deposit funds to the sub-account by passing
+    // it as order.accountId.
+    subAccountId: process.env.NOMBA_SUB_ACCOUNT_ID?.trim() || null,
     // Production by default. Set NOMBA_BASE_URL=https://sandbox.nomba.com to use
     // sandbox credentials (credentials are environment-specific).
     baseUrl: (process.env.NOMBA_BASE_URL?.trim() || "https://api.nomba.com").replace(/\/$/, ""),
@@ -218,6 +222,7 @@ export async function createCheckoutOrder(input: {
   orderReference: string
   callbackUrl: string
 }): Promise<{ checkoutLink: string; orderReference: string }> {
+  const cfg = getNombaConfig()
   const res = await nombaFetch("/v1/checkout/order", {
     method: "POST",
     body: JSON.stringify({
@@ -228,6 +233,7 @@ export async function createCheckoutOrder(input: {
         amount: koboToNombaAmount(input.amountKobo),
         currency: input.currency,
         callbackUrl: input.callbackUrl,
+        ...(cfg.subAccountId ? { accountId: cfg.subAccountId } : {}),
       },
       // Required for recurring billing: Nomba returns tokenKey in the
       // payment_success webhook only when the card is tokenized.
@@ -262,6 +268,7 @@ export async function chargeTokenizedCard(input: {
 }): Promise<NombaChargeResult> {
   // Config problems throw loudly; a declined/failed charge is returned as a
   // structured real failure so callers can persist the true outcome.
+  const cfg = getNombaConfig()
   const res = await nombaFetch("/v1/checkout/tokenized-card-payment", {
     method: "POST",
     body: JSON.stringify({
@@ -272,6 +279,7 @@ export async function chargeTokenizedCard(input: {
         amount: koboToNombaAmount(input.amountKobo),
         currency: input.currency,
         callbackUrl: input.callbackUrl,
+        ...(cfg.subAccountId ? { accountId: cfg.subAccountId } : {}),
       },
       tokenKey: input.tokenKey,
     }),

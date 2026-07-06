@@ -86,7 +86,10 @@ NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
 # Obtain from the Nomba dashboard: Developer -> API Keys.
 NOMBA_CLIENT_ID=...        # Nomba client_id
 NOMBA_PRIVATE_KEY=...      # Nomba client_secret ("private key")
-NOMBA_ACCOUNT_ID=...       # Nomba parent accountId
+NOMBA_ACCOUNT_ID=...       # Nomba parent accountId (sent in the accountId header)
+# Optional: outlet/sub-account that checkout funds should be deposited into
+# (passed as order.accountId on checkout and tokenized charges).
+# NOMBA_SUB_ACCOUNT_ID=...
 
 # Optional: point at the Nomba sandbox (use sandbox credentials with it).
 # NOMBA_BASE_URL=https://sandbox.nomba.com
