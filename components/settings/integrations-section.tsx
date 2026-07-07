@@ -169,8 +169,8 @@ export function IntegrationsSection({
   return (
     <div className="space-y-6">
       <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-center gap-2">
             <div className="rounded-md bg-primary/15 p-2">
               <PlugZap className="h-4 w-4 text-primary" />
             </div>

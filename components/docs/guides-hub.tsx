@@ -6,7 +6,7 @@ import { GUIDES, GUIDES_HUB } from "@/lib/docs-guides"
 export function GuidesHub() {
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-6 sm:p-8">
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-8">
         <div className="flex items-start gap-4">
           <div className="rounded-xl bg-primary/15 p-3">
             <GUIDES_HUB.icon className="h-6 w-6 text-primary" />

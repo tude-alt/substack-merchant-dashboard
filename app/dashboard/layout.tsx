@@ -22,7 +22,7 @@ export default async function DashboardLayout({
       <Sidebar merchantName={merchantName} email={session.user.email} />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopBar />
-        <main className="relative flex-1 bg-dot-grid px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+        <main className="relative flex-1 bg-dot-grid px-3 py-5 pb-24 sm:px-4 sm:py-6 md:px-8 md:py-8 md:pb-8">
           <div className="pointer-events-none absolute inset-0 bg-mesh opacity-50" />
           <div className="relative mx-auto max-w-7xl">{children}</div>
         </main>

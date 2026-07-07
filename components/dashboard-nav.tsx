@@ -16,11 +16,11 @@ import { signOut } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/subscribers", label: "Subscribers", icon: Users },
-  { href: "/dashboard/plans", label: "Plans", icon: Layers },
-  { href: "/dashboard/transactions", label: "Transactions", icon: Receipt },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/subscribers", label: "Subscribers", shortLabel: "Subs", icon: Users },
+  { href: "/dashboard/plans", label: "Plans", shortLabel: "Plans", icon: Layers },
+  { href: "/dashboard/transactions", label: "Transactions", shortLabel: "Txns", icon: Receipt },
+  { href: "/dashboard/settings", label: "Settings", shortLabel: "Settings", icon: Settings },
 ]
 
 const SECONDARY = [{ href: "/dashboard/docs", label: "Guides", icon: BookOpen }]
@@ -178,7 +178,7 @@ export function BottomNav() {
             )}
           >
             <Icon className={cn("h-5 w-5", active && "stroke-[2.5px]")} />
-            {item.label}
+            <span className="max-w-[3.25rem] truncate sm:max-w-none">{item.shortLabel ?? item.label}</span>
           </Link>
         )
       })}

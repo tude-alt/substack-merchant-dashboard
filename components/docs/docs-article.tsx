@@ -11,9 +11,9 @@ export function DocsArticle({
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-      <article className="docs-content space-y-4 p-6 sm:p-8">{children}</article>
+      <article className="docs-content space-y-4 p-4 sm:p-6 md:p-8">{children}</article>
       {(sourceFile || footer) && (
-        <div className="flex flex-col gap-3 border-t border-border bg-muted/30 px-6 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="flex flex-col gap-3 border-t border-border bg-muted/30 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8">
           {sourceFile && (
             <span>
               Source:{" "}
