@@ -1,54 +1,12 @@
-import Link from "next/link"
-import { readFile } from "fs/promises"
-import path from "path"
 import { PageHeader } from "@/components/page-header"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft, BookOpen, Link2 } from "lucide-react"
-import { renderMarkdown } from "@/lib/render-markdown"
+import { GuidesHub } from "@/components/docs/guides-hub"
+import { GUIDES_HUB } from "@/lib/docs-guides"
 
-export default async function DocsPage() {
-  const mdPath = path.join(process.cwd(), "docs", "merchant-quickstart.md")
-  const markdown = await readFile(mdPath, "utf8")
-
+export default function DocsHubPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Integration quickstart"
-        description="End-to-end guide for connecting your app to Subflow via the REST API."
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild className="gap-1.5">
-              <Link href="/dashboard/docs/examples">
-                <BookOpen className="h-4 w-4" />
-                Usage examples
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="gap-1.5">
-              <Link href="/dashboard/docs/checkout">
-                <Link2 className="h-4 w-4" />
-                Checkout & embed
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="gap-1.5">
-              <Link href="/dashboard/settings">
-                <ArrowLeft className="h-4 w-4" />
-                Settings
-              </Link>
-            </Button>
-          </div>
-        }
-      />
-      <Card className="p-6">
-        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <BookOpen className="h-4 w-4" />
-          <span>
-            Markdown source:{" "}
-            <code className="font-mono text-xs text-foreground">docs/merchant-quickstart.md</code>
-          </span>
-        </div>
-        <article className="space-y-3">{renderMarkdown(markdown)}</article>
-      </Card>
-    </div>
+    <>
+      <PageHeader title={GUIDES_HUB.title} description={GUIDES_HUB.description} />
+      <GuidesHub />
+    </>
   )
 }

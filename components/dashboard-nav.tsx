@@ -23,10 +23,7 @@ const NAV = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
-const SECONDARY = [
-  { href: "/dashboard/docs/examples", label: "Examples", icon: BookOpen },
-  { href: "/dashboard/docs", label: "API docs", icon: BookOpen },
-]
+const SECONDARY = [{ href: "/dashboard/docs", label: "Guides", icon: BookOpen }]
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard"
@@ -149,7 +146,7 @@ export function MobileTopBar() {
         <Logo />
       </Link>
       <Link
-        href="/dashboard/docs/checkout"
+        href="/dashboard/docs"
         className={cn(
           "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
           onDocs

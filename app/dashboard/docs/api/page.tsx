@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button"
 import { renderMarkdown } from "@/lib/render-markdown"
 import { GUIDES } from "@/lib/docs-guides"
 
-const guide = GUIDES.find((g) => g.slug === "checkout")!
+const guide = GUIDES.find((g) => g.slug === "api")!
 
-export default async function CheckoutDocsPage() {
+export default async function ApiDocsPage() {
   const mdPath = path.join(process.cwd(), guide.sourceFile)
   const markdown = await readFile(mdPath, "utf8")
 
@@ -20,7 +20,7 @@ export default async function CheckoutDocsPage() {
         sourceFile={guide.sourceFile}
         footer={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/plans">View your plans</Link>
+            <Link href="/dashboard/settings">Open Settings</Link>
           </Button>
         }
       >

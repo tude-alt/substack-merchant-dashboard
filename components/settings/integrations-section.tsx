@@ -181,16 +181,10 @@ export function IntegrationsSection({
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild className="gap-1.5">
-            <Link href="/dashboard/docs/checkout">
-              <BookOpen className="h-4 w-4" />
-              Checkout guide
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild className="gap-1.5">
+          <Button variant="outline" size="sm" asChild className="gap-1.5 shrink-0">
             <Link href="/dashboard/docs">
               <BookOpen className="h-4 w-4" />
-              API quickstart
+              Guides
             </Link>
           </Button>
         </div>
