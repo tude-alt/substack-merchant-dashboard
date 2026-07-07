@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { getMerchant } from "@/app/actions/merchant"
 import { getSession } from "@/lib/session"
 import { getAppUrl } from "@/lib/billing"
 import { SetupWizard } from "@/components/setup-wizard"

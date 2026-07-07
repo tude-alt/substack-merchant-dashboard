@@ -35,15 +35,28 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         setLoading(false)
         return
       }
-      const { error: signInError } = await signIn.email({ email, password })
-      if (signInError) {
-        setError(signInError.message ?? "Could not sign in after verification.")
+
+      let sessionRes = await authClient.getSession()
+      if (!sessionRes.data?.session) {
+        const { error: signInError } = await signIn.email({ email, password })
+        if (signInError) {
+          setError(signInError.message ?? "Could not sign in after verification.")
+          setLoading(false)
+          return
+        }
+        sessionRes = await authClient.getSession()
+      }
+
+      if (!sessionRes.data?.session) {
+        setError("Email verified, but sign-in failed. Try signing in from the login page.")
         setLoading(false)
         return
       }
-      router.push("/onboarding")
+
+      router.push(isSignUp ? "/onboarding" : "/dashboard")
       router.refresh()
-    } catch {
+    } catch (err) {
+      console.error("[auth] verify OTP error:", err)
       setError("Verification failed. Please try again.")
       setLoading(false)
     }
