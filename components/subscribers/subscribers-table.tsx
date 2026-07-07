@@ -16,6 +16,7 @@ import { formatNaira, formatDate } from "@/lib/format"
 import {
   getSubscriberHistory,
   chargeSubscriberNow,
+  verifySubscriberPayment,
 } from "@/app/actions/subscribers"
 import {
   ChevronDown,
@@ -24,6 +25,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -113,9 +115,34 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
   const [, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<number | null>(null)
   const [chargingId, setChargingId] = useState<number | null>(null)
+  const [verifyingId, setVerifyingId] = useState<number | null>(null)
   const [banner, setBanner] = useState<
     { kind: "success" | "error"; text: string } | null
   >(null)
+
+  function verifyPayment(s: Subscriber) {
+    setBanner(null)
+    setVerifyingId(s.id)
+    startTransition(async () => {
+      const res = await verifySubscriberPayment(s.id)
+      if (res.ok) {
+        setBanner({
+          kind: "success",
+          text:
+            res.status === "already_active"
+              ? `${s.name} is already active — dashboard refreshed.`
+              : `Payment confirmed for ${s.name}. Subscriber is now active.`,
+        })
+        setLoadingId(s.id)
+        const rows = await getSubscriberHistory(s.id)
+        setHistoryCache((c) => ({ ...c, [s.id]: rows as HistoryRow[] }))
+        setLoadingId(null)
+      } else {
+        setBanner({ kind: "error", text: `Could not verify payment for ${s.name}: ${res.error}` })
+      }
+      setVerifyingId(null)
+    })
+  }
 
   function chargeNow(s: Subscriber) {
     setBanner(null)
@@ -278,6 +305,28 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
                               {chargingId === s.id
                                 ? "Charging via Nomba…"
                                 : "Charge now"}
+                            </Button>
+                          )}
+                          {s.status === "pending_payment" && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-7 gap-1.5"
+                              disabled={verifyingId === s.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                verifyPayment(s)
+                              }}
+                            >
+                              <RefreshCw
+                                className={cn(
+                                  "h-3.5 w-3.5",
+                                  verifyingId === s.id && "animate-spin",
+                                )}
+                              />
+                              {verifyingId === s.id
+                                ? "Checking Nomba…"
+                                : "Verify payment"}
                             </Button>
                           )}
                           {s.status === "pending_payment" && s.checkoutLink && (

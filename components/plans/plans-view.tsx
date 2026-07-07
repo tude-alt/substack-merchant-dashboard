@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -110,10 +111,15 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
           title="Plans"
           description="Billing plans your customers can subscribe to. Share a checkout link — no code required — or use the plan ID in your API integration."
           action={
-            <Button onClick={() => setOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New plan
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" asChild className="gap-2">
+                <Link href="/dashboard/docs/checkout">Checkout guide</Link>
+              </Button>
+              <Button onClick={() => setOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New plan
+              </Button>
+            </div>
           }
         />
 
@@ -145,7 +151,7 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
           </Card>
         ) : (
           <>
-            <div className="overflow-hidden rounded-lg border border-border">
+            <div className="hidden overflow-hidden rounded-lg border border-border lg:block">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -213,7 +219,7 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:hidden">
               {plans.map((p) => (
                 <Card key={`card-${p.id}`} className="flex flex-col p-5">
                   <div className="flex items-start justify-between">

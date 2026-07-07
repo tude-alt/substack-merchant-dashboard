@@ -3,6 +3,7 @@ import { getPlansWithStats } from "@/app/actions/plans"
 import { getWebhookDeliveries } from "@/app/actions/webhooks"
 import { PageHeader } from "@/components/page-header"
 import { IntegrationsSection } from "@/components/settings/integrations-section"
+import { getAppUrl } from "@/lib/billing"
 
 export default async function SettingsPage() {
   const [merchant, deliveries, plans] = await Promise.all([
@@ -27,6 +28,7 @@ export default async function SettingsPage() {
         webhookSecret={merchant.webhookSecret}
         webhookUrl={merchant.webhookUrl}
         selectedEvents={selectedEvents}
+        nombaWebhookUrl={`${getAppUrl()}/api/webhooks/nomba`}
         plans={plans.map((p) => ({
           id: p.id,
           name: p.name,

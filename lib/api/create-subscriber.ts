@@ -2,6 +2,7 @@ import crypto from "crypto"
 import { db } from "@/lib/db"
 import { activity, plan, subscriber } from "@/lib/db/schema"
 import { getAppUrl } from "@/lib/billing"
+import { appendOrderReferenceToCallbackUrl } from "@/lib/confirm-payment"
 import { createCheckoutOrder, NombaApiError, NombaConfigError } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { formatSubscriberCreated } from "@/lib/api/subscribers"
@@ -64,7 +65,8 @@ export async function createSubscriberForMerchant(
 
   const initOrderReference = `SUBFLOW-INIT-${crypto.randomUUID()}`
 
-  const callbackUrl = input.callbackUrl?.trim() || `${getAppUrl()}/dashboard/subscribers`
+  const callbackBase = input.callbackUrl?.trim() || `${getAppUrl()}/dashboard/subscribers`
+  const callbackUrl = appendOrderReferenceToCallbackUrl(callbackBase, initOrderReference)
 
   const order = await createCheckoutOrder({
     amountKobo: p.amount,

@@ -7,27 +7,27 @@ import { Card } from "@/components/ui/card"
 import { ArrowLeft, BookOpen, Link2 } from "lucide-react"
 import { renderMarkdown } from "@/lib/render-markdown"
 
-export default async function DocsPage() {
-  const mdPath = path.join(process.cwd(), "docs", "merchant-quickstart.md")
+export default async function CheckoutDocsPage() {
+  const mdPath = path.join(process.cwd(), "docs", "checkout-embed-guide.md")
   const markdown = await readFile(mdPath, "utf8")
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Integration quickstart"
-        description="End-to-end guide for connecting your app to Subflow via the REST API."
+        title="Checkout & embed guide"
+        description="Share checkout links or embed a subscribe button — no backend code required."
         action={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild className="gap-1.5">
-              <Link href="/dashboard/docs/checkout">
-                <Link2 className="h-4 w-4" />
-                Checkout & embed
+              <Link href="/dashboard/docs">
+                <BookOpen className="h-4 w-4" />
+                API quickstart
               </Link>
             </Button>
             <Button variant="outline" asChild className="gap-1.5">
-              <Link href="/dashboard/settings">
-                <ArrowLeft className="h-4 w-4" />
-                Settings
+              <Link href="/dashboard/plans">
+                <Link2 className="h-4 w-4" />
+                Your plans
               </Link>
             </Button>
           </div>
@@ -38,11 +38,19 @@ export default async function DocsPage() {
           <BookOpen className="h-4 w-4" />
           <span>
             Markdown source:{" "}
-            <code className="font-mono text-xs text-foreground">docs/merchant-quickstart.md</code>
+            <code className="font-mono text-xs text-foreground">
+              docs/checkout-embed-guide.md
+            </code>
           </span>
         </div>
         <article className="space-y-3">{renderMarkdown(markdown)}</article>
       </Card>
+      <Button variant="ghost" asChild className="gap-1.5">
+        <Link href="/dashboard/settings">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Settings
+        </Link>
+      </Button>
     </div>
   )
 }
