@@ -35,6 +35,7 @@ export const auth = betterAuth({
     },
     sendOnSignUp: isGmailConfigured(),
     sendOnSignIn: false,
+    autoSignInAfterVerification: true,
   },
   plugins: [
     emailOTP({
