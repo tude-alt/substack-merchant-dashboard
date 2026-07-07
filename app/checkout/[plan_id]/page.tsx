@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { HostedCheckoutForm } from "@/components/checkout/hosted-checkout-form"
 import { getHostedCheckoutPlan } from "@/lib/checkout"
 import { formatNaira } from "@/lib/format"
+import { Logo } from "@/components/logo"
 import type { Metadata } from "next"
 
 type PageProps = {
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const plan = await getHostedCheckoutPlan(planId)
   return {
-    title: plan ? `Subscribe to ${plan.name} — Subflow` : "Checkout — Subflow",
+    title: plan ? `Subscribe to ${plan.name}` : "Checkout — Subflow",
   }
 }
 
@@ -36,8 +37,13 @@ export default async function HostedCheckoutPage({ params, searchParams }: PageP
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
+    <div className="min-h-screen bg-mesh">
+      <header className="border-b border-border/60 px-6 py-4">
+        <div className="mx-auto flex max-w-md items-center justify-center">
+          <Logo />
+        </div>
+      </header>
+      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-md flex-col justify-center px-4 py-10">
         <HostedCheckoutForm
           planId={plan.id}
           planName={plan.name}

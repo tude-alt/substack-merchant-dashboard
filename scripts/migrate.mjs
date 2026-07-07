@@ -164,6 +164,20 @@ CREATE TABLE IF NOT EXISTS "plan_metric_snapshot" (
   UNIQUE("userId", "planId", "snapshotDate")
 );
 
+ALTER TABLE "plan" ADD COLUMN IF NOT EXISTS "successRedirectUrl" text NOT NULL DEFAULT '';
+
+CREATE TABLE IF NOT EXISTS "plan_metric_snapshot" (
+  "id" serial PRIMARY KEY,
+  "userId" text NOT NULL,
+  "planId" integer NOT NULL,
+  "snapshotDate" date NOT NULL,
+  "mrr" bigint NOT NULL DEFAULT 0,
+  "activeSubscribers" integer NOT NULL DEFAULT 0,
+  "monitoringEnabled" boolean NOT NULL DEFAULT true,
+  "createdAt" timestamp NOT NULL DEFAULT now(),
+  UNIQUE("userId", "planId", "snapshotDate")
+);
+
 CREATE TABLE IF NOT EXISTS "api_idempotency" (
   "id" serial PRIMARY KEY,
   "userId" text NOT NULL,

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -159,10 +158,10 @@ export function SetupWizard({
             )
           })}
         </div>
-        <Progress value={progress} className="h-1.5" />
+        <Progress value={progress} className="h-2 bg-muted" />
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-elevated sm:p-8">
         {error && (
           <div
             role="alert"

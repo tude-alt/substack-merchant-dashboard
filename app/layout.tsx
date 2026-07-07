@@ -1,20 +1,33 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-body',
+  subsets: ['latin'],
+  display: 'swap',
+})
+
+const jakartaDisplay = Plus_Jakarta_Sans({
+  variable: '--font-display',
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: 'Subflow — Nigerian SaaS Recurring Billing',
+  title: 'Subflow — Recurring billing for Nigerian SaaS',
   description:
-    'Subflow is recurring billing infrastructure for Nigerian SaaS. Manage subscriptions, plans, retries, and revenue in one merchant dashboard.',
-  generator: 'v0.app',
+    'Plans, hosted checkout, subscriptions, and webhooks — built for Nigerian SaaS on Nomba. Go live in minutes with zero backend code.',
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: '#4f46e5',
+  themeColor: '#4338ca',
 }
 
 export default function RootLayout({
@@ -23,8 +36,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`dark ${inter.variable}`}>
-      <body className="font-sans antialiased bg-background text-foreground">
+    <html lang="en" className={`${jakarta.variable} ${jakartaDisplay.variable}`}>
+      <body className="font-sans bg-background text-foreground">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
