@@ -139,24 +139,43 @@ export function Sidebar({
 
 export function MobileTopBar() {
   const pathname = usePathname()
+  const router = useRouter()
   const onDocs = pathname.startsWith("/dashboard/docs")
+
+  async function handleSignOut() {
+    await signOut()
+    router.push("/login")
+    router.refresh()
+  }
+
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-card/80 px-4 backdrop-blur-md md:hidden">
-      <Link href="/dashboard">
+    <header className="flex h-14 items-center justify-between gap-2 border-b border-border bg-card/80 px-4 backdrop-blur-md md:hidden">
+      <Link href="/dashboard" className="shrink-0">
         <Logo />
       </Link>
-      <Link
-        href="/dashboard/docs"
-        className={cn(
-          "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
-          onDocs
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-        )}
-      >
-        <BookOpen className="h-4 w-4" />
-        Guides
-      </Link>
+      <div className="flex items-center gap-1">
+        <Link
+          href="/dashboard/docs"
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+            onDocs
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+          )}
+        >
+          <BookOpen className="h-4 w-4" />
+          Guides
+        </Link>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
+      </div>
     </header>
   )
 }
