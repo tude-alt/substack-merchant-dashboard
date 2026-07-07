@@ -149,11 +149,11 @@ export function TransactionsView({ initial }: { initial: Result }) {
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Customer</TableHead>
-              <TableHead>Plan</TableHead>
+              <TableHead className="hidden sm:table-cell">Plan</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead>Reason</TableHead>
+              <TableHead className="hidden md:table-cell">Reference</TableHead>
+              <TableHead className="hidden lg:table-cell">Reason</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -189,9 +189,10 @@ export function TransactionsView({ initial }: { initial: Result }) {
                     {formatDate(t.createdAt)}
                   </TableCell>
                   <TableCell className="font-medium text-foreground">
-                    {t.customerName}
+                    <div>{t.customerName}</div>
+                    <div className="text-xs text-muted-foreground sm:hidden">{t.planName}</div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="hidden text-muted-foreground sm:table-cell">
                     {t.planName}
                   </TableCell>
                   <TableCell className="text-right font-medium tabular-nums text-foreground">
@@ -200,10 +201,10 @@ export function TransactionsView({ initial }: { initial: Result }) {
                   <TableCell>
                     <StatusPill status={t.status} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
+                  <TableCell className="hidden font-mono text-xs text-muted-foreground md:table-cell">
                     {t.nombaRef}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
                     {t.failureReason ?? "—"}
                   </TableCell>
                 </TableRow>

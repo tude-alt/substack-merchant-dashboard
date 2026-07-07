@@ -87,6 +87,7 @@ export function IntegrationsSection({
   webhookSecret,
   webhookUrl,
   selectedEvents,
+  nombaWebhookUrl,
   plans,
   deliveries,
 }: {
@@ -95,6 +96,7 @@ export function IntegrationsSection({
   webhookSecret: string
   webhookUrl: string
   selectedEvents: string[]
+  nombaWebhookUrl: string
   plans: PlanOption[]
   deliveries: Delivery[]
 }) {
@@ -180,14 +182,35 @@ export function IntegrationsSection({
             </div>
           </div>
           <Button variant="outline" size="sm" asChild className="gap-1.5">
+            <Link href="/dashboard/docs/checkout">
+              <BookOpen className="h-4 w-4" />
+              Checkout guide
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="gap-1.5">
             <Link href="/dashboard/docs">
               <BookOpen className="h-4 w-4" />
-              Quickstart guide
+              API quickstart
             </Link>
           </Button>
         </div>
 
         <div className="space-y-6">
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+            <p className="font-medium text-foreground">Nomba inbound webhook (required for live payments)</p>
+            <p className="mt-1 text-muted-foreground">
+              Register this URL in your Nomba developer dashboard so Subflow is notified when
+              customers pay. Without it, use <strong>Verify payment</strong> on pending subscribers
+              or rely on the hosted checkout success page.
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <code className="flex-1 truncate rounded-lg border border-border bg-muted/40 px-3 py-2 font-mono text-xs">
+                {nombaWebhookUrl}
+              </code>
+              <CopyButton value={nombaWebhookUrl} label="Copy Nomba webhook URL" />
+            </div>
+          </div>
+
           <ApiKeysSection liveApiKey={liveApiKey} testApiKey={testApiKey} embedded />
 
           <div className="space-y-2 border-t border-border pt-5">

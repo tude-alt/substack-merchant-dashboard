@@ -104,7 +104,7 @@ Also accepted (legacy nested shape):
 
 **Payment method:** Subflow uses Nomba hosted checkout (card tokenization). Use `payment_method: "nomba_checkout_link"`. The value `nomba_virtual_account` is not supported.
 
-**When does the subscription become active?** After the customer pays at `checkout_url`, Nomba sends Subflow a `payment_success` webhook. Subflow then marks the subscriber `active` and sends your app a `charge.success` webhook. The redirect back from checkout does **not** activate the subscription.
+**When does the subscription become active?** After the customer pays at `checkout_url`, Subflow confirms the payment with Nomba — via the hosted success page (`?ref=...`) and/or Nomba's `payment_success` webhook to `/api/webhooks/nomba`. The subscriber is then marked `active` and your app receives `charge.success` if webhooks are configured.
 
 ## 4. Look up a subscriber
 

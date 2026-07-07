@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { activity, plan, subscriber, transaction } from "@/lib/db/schema"
+import { confirmInitialPaymentByOrderReference } from "@/lib/confirm-payment"
 import { monthlyMrrKobo, nextBillingDate } from "@/lib/billing"
 import { verifyNombaWebhookSignature, verifyTransaction } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
@@ -134,66 +135,18 @@ async function handlePaymentSuccess(
   const nombaTransactionId = str(data.transaction?.transactionId) || verifiedTransactionId
   const tokenKey = str(data.tokenizedCardData?.tokenKey)
 
-  // Case 1: initial tokenizing checkout for a pending subscriber.
   if (orderReference) {
-    const [sub] = await db
-      .select()
-      .from(subscriber)
-      .where(eq(subscriber.initOrderReference, orderReference))
-      .limit(1)
-
-    if (sub) {
-      const [p] = sub.planId
-        ? await db
-            .select()
-            .from(plan)
-            .where(and(eq(plan.id, sub.planId), eq(plan.userId, sub.userId)))
-            .limit(1)
-        : [undefined]
-
-      const interval = p?.interval ?? "monthly"
-      const amount = p?.amount ?? 0
-
-      await db
-        .update(subscriber)
-        .set({
-          status: "active",
-          lastChargeResult: "successful",
-          mrr: monthlyMrrKobo(amount, interval),
-          billingDate: nextBillingDate(new Date(), interval),
-          ...(tokenKey && tokenKey !== "N/A" ? { nombaTokenKey: tokenKey } : {}),
-        })
-        .where(eq(subscriber.id, sub.id))
-
-      await db.insert(transaction).values({
-        userId: sub.userId,
-        subscriberId: sub.id,
-        customerName: sub.name,
-        planName: sub.planName,
-        amount,
-        status: "successful",
-        nombaRef: nombaTransactionId || orderReference,
-      })
-
-      await db.insert(activity).values({
-        userId: sub.userId,
-        type: "charge.success",
-        message: `${sub.name} completed first payment for ${sub.planName} (${nombaTransactionId || orderReference})`,
-      })
-
+    const result = await confirmInitialPaymentByOrderReference(orderReference, {
+      tokenKey: tokenKey || undefined,
+      nombaTransactionId,
+    })
+    if (result.status === "activated" || result.status === "already_active") {
       if (!tokenKey || tokenKey === "N/A") {
         console.warn(
           `[nomba-webhook] payment_success for ${orderReference} carried no usable tokenKey; ` +
-            `recurring charges will not be possible for subscriber ${sub.id} until one is captured.`,
+            `recurring charges may not be possible until a card is tokenized.`,
         )
       }
-
-      await dispatchMerchantWebhook(sub.userId, "charge.success", {
-        subscriber_id: sub.id,
-        email: sub.email,
-        plan_id: sub.planId,
-        amount,
-      })
       return
     }
   }
