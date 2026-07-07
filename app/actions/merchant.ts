@@ -6,6 +6,8 @@ import { merchant } from "@/lib/db/schema"
 import { getUserId } from "@/lib/session"
 import { verifyNombaCredentials } from "@/lib/nomba"
 import { regenerateWebhookSecret as rotateWebhookSecret } from "@/lib/merchant-secrets"
+import { getMerchantUserEmail } from "@/lib/merchant-notify"
+import { sendOnboardingCompleteEmail } from "@/lib/email"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -104,6 +106,18 @@ export async function completeOnboarding() {
       .update(merchant)
       .set({ onboardingComplete: true })
       .where(eq(merchant.userId, userId))
+
+    const account = await getMerchantUserEmail(userId)
+    if (account?.email) {
+      try {
+        await sendOnboardingCompleteEmail({
+          to: account.email,
+          name: m.businessName || account.name || "there",
+        })
+      } catch (e) {
+        console.error("[merchant] onboarding complete email failed:", e)
+      }
+    }
   }
   revalidatePath("/dashboard")
 }

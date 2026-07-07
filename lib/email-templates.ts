@@ -62,3 +62,132 @@ export function passwordResetEmail(url: string): string {
   `,
   )
 }
+
+export function welcomeEmail(name: string, onboardingUrl: string, examplesUrl: string): string {
+  return emailLayout(
+    "Welcome to Subflow",
+    `
+    <p>Hi ${name},</p>
+    <p>Your Subflow merchant account is ready. Create a plan, share a checkout link, and start collecting recurring payments in NGN.</p>
+    <p>
+      <a href="${onboardingUrl}" style="display: inline-block; background: #4f46e5; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">Complete setup</a>
+    </p>
+    <p style="color: #64748b; font-size: 14px;"><a href="${examplesUrl}">View integration examples</a></p>
+  `,
+  )
+}
+
+export function checkoutInviteEmail(opts: {
+  customerName: string
+  planName: string
+  amountNgn: string
+  checkoutUrl: string
+  merchantName: string
+}): string {
+  return emailLayout(
+    "Complete your subscription",
+    `
+    <p>Hi ${opts.customerName},</p>
+    <p><strong>${opts.merchantName}</strong> invited you to subscribe to <strong>${opts.planName}</strong> (${opts.amountNgn}).</p>
+    <p><a href="${opts.checkoutUrl}" style="display: inline-block; background: #4f46e5; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">Pay &amp; subscribe</a></p>
+    <p style="color: #64748b; font-size: 14px;">Or copy this link:<br/><a href="${opts.checkoutUrl}">${opts.checkoutUrl}</a></p>
+  `,
+  )
+}
+
+export function paymentReceiptEmail(opts: {
+  customerName: string
+  planName: string
+  amountNgn: string
+  nombaRef: string
+  merchantName: string
+  portalUrl?: string
+}): string {
+  const portalBlock = opts.portalUrl
+    ? `<p><a href="${opts.portalUrl}">Manage your subscription</a></p>`
+    : ""
+  return emailLayout(
+    "Payment receipt",
+    `
+    <p>Hi ${opts.customerName},</p>
+    <p>Your payment of <strong>${opts.amountNgn}</strong> for <strong>${opts.planName}</strong> with ${opts.merchantName} was successful.</p>
+    <p>Reference: <code>${opts.nombaRef}</code></p>
+    ${portalBlock}
+    <p>Thank you for subscribing.</p>
+  `,
+  )
+}
+
+export function dunningEmail(opts: {
+  customerName: string
+  planName: string
+  amountNgn: string
+  retryDate: string
+  portalUrl?: string
+  finalAttempt?: boolean
+}): string {
+  const portalBlock = opts.portalUrl
+    ? `<p><a href="${opts.portalUrl}">Update your payment method</a></p>`
+    : ""
+  const retryLine = opts.finalAttempt
+    ? "<p>We were unable to collect payment after multiple attempts. Your access may be suspended until payment is updated.</p>"
+    : `<p>We'll try again on <strong>${opts.retryDate}</strong>.</p>`
+  return emailLayout(
+    "Payment failed — action needed",
+    `
+    <p>Hi ${opts.customerName},</p>
+    <p>We couldn't process your recurring payment of <strong>${opts.amountNgn}</strong> for <strong>${opts.planName}</strong>.</p>
+    ${retryLine}
+    ${portalBlock}
+  `,
+  )
+}
+
+export function subscriptionCancelledEmail(opts: {
+  customerName: string
+  planName: string
+  merchantName: string
+}): string {
+  return emailLayout(
+    "Subscription cancelled",
+    `
+    <p>Hi ${opts.customerName},</p>
+    <p>Your subscription to <strong>${opts.planName}</strong> with ${opts.merchantName} has been cancelled.</p>
+    <p>You will not be charged again. If this was a mistake, contact your merchant.</p>
+  `,
+  )
+}
+
+export function subscriptionPausedEmail(opts: {
+  customerName: string
+  planName: string
+  merchantName: string
+}): string {
+  return emailLayout(
+    "Subscription paused",
+    `
+    <p>Hi ${opts.customerName},</p>
+    <p>Your subscription to <strong>${opts.planName}</strong> with ${opts.merchantName} has been paused.</p>
+    <p>Billing is on hold until your merchant reactivates your account.</p>
+  `,
+  )
+}
+
+export function onboardingCompleteEmail(opts: {
+  merchantName: string
+  dashboardUrl: string
+  docsUrl: string
+}): string {
+  return emailLayout(
+    "You're ready to charge",
+    `
+    <p>Hi ${opts.merchantName},</p>
+    <p>Your Subflow setup is complete. Plans, API keys, and monitoring are configured.</p>
+    <p>
+      <a href="${opts.dashboardUrl}" style="display: inline-block; background: #4f46e5; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">Open dashboard</a>
+    </p>
+    <p style="color: #64748b; font-size: 14px;"><a href="${opts.docsUrl}">Integration guides</a></p>
+  `,
+  )
+}
+

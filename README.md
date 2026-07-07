@@ -120,6 +120,29 @@ Without this webhook, payments can still confirm via the checkout success page o
 - **Customer portal** — copy portal links from Subscribers for self-service billing history
 - **CSV export** — export subscribers and transactions from dashboard tables
 
+### Email notifications
+
+All emails send from `axiosbuild@gmail.com` (or your configured `GMAIL_USER`) when Gmail is set up. Merchants can add an **alert email** in Settings for operational notifications.
+
+| Recipient | Trigger | Email |
+|-----------|---------|-------|
+| **Merchant** | Sign up | Welcome + link to complete setup |
+| **Merchant** | Email verification | 6-digit OTP code |
+| **Merchant** | Password reset | Reset link |
+| **Merchant** | Onboarding complete | "You're ready to charge" + dashboard link |
+| **Merchant** | New API subscriber (pending payment) | Alert: new checkout started |
+| **Merchant** | Payment received | Alert: customer paid |
+| **Merchant** | Charge failed | Alert: failure reason + retry status |
+| **Merchant** | Subscription cancelled | Alert: customer cancelled |
+| **Merchant** | Subscription paused | Alert: customer paused |
+| **Customer** | Created via API | Checkout invite with payment link |
+| **Customer** | First or recurring payment | Payment receipt + portal link |
+| **Customer** | Recurring charge failed | Dunning email with retry date |
+| **Customer** | Retries exhausted | Final dunning — access may be suspended |
+| **Customer** | Cancelled or paused | Subscription status update |
+
+Slack: optional `slackWebhookUrl` in Settings mirrors merchant alerts.
+
 ---
 
 ## For developers (integrating via API)

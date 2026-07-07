@@ -7,6 +7,7 @@ import { validateCoupon } from "@/lib/coupons"
 import { generatePortalToken } from "@/lib/portal"
 import { createCheckoutOrder, NombaApiError, NombaConfigError } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
+import { notifyCheckoutInvite } from "@/lib/merchant-notify"
 import { formatSubscriberCreated } from "@/lib/api/subscribers"
 import { and, eq, sql } from "drizzle-orm"
 
@@ -139,6 +140,21 @@ export async function createSubscriberForMerchant(
     })
   } catch (e) {
     console.error("[create-subscriber] merchant webhook dispatch failed:", e)
+  }
+
+  if (input.channel !== "checkout" && created.checkoutLink) {
+    try {
+      await notifyCheckoutInvite({
+        userId: input.userId,
+        customerName: input.name,
+        customerEmail: input.email,
+        planName: p.name,
+        amountKobo: chargeAmountKobo,
+        checkoutUrl: created.checkoutLink,
+      })
+    } catch (e) {
+      console.error("[create-subscriber] checkout invite email failed:", e)
+    }
   }
 
   return { kind: "created", subscriber: created }

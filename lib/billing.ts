@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { activity, plan, subscriber, transaction } from "@/lib/db/schema"
 import { chargeTokenizedCard, verifyTransaction } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
+import { notifyChargeFailed, notifyPaymentReceipt } from "@/lib/merchant-notify"
 import { and, eq } from "drizzle-orm"
 
 export function getAppUrl(): string {
@@ -179,6 +180,22 @@ export async function chargeSubscriberViaNomba(
         amount: p.amount,
         attempt: opts.retryOfTransactionId ? priorRetryCount + 1 : undefined,
       })
+
+      try {
+        await notifyPaymentReceipt(
+          userId,
+          {
+            email: sub.email,
+            name: sub.name,
+            planName: p.name,
+            portalToken: sub.portalToken,
+          },
+          p.amount,
+          nombaRef,
+        )
+      } catch (e) {
+        console.error("[billing] payment notifications failed:", e)
+      }
     } else {
       await db
         .update(subscriber)
@@ -244,6 +261,26 @@ export async function chargeSubscriberViaNomba(
     attempt: attemptNumber + 1,
     final_attempt: !retriesRemaining,
   })
+
+  try {
+    await notifyChargeFailed(
+      userId,
+      {
+        email: sub.email,
+        name: sub.name,
+        planName: p.name,
+        portalToken: sub.portalToken,
+      },
+      p.amount,
+      {
+        retryDate: nextRetry,
+        finalAttempt: !retriesRemaining,
+        reason: result.description,
+      },
+    )
+  } catch (e) {
+    console.error("[billing] charge failure notifications failed:", e)
+  }
 
   return {
     ok: false,
