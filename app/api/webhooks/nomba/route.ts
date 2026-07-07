@@ -1,9 +1,10 @@
 import { db } from "@/lib/db"
-import { activity, plan, subscriber, transaction } from "@/lib/db/schema"
+import { activity, merchant, plan, subscriber, transaction } from "@/lib/db/schema"
 import { confirmInitialPaymentByOrderReference } from "@/lib/confirm-payment"
 import { monthlyMrrKobo, nextBillingDate } from "@/lib/billing"
 import { verifyNombaWebhookSignature, verifyTransaction } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
+import { portalUrlForToken, sendDunningEmail, sendMerchantAlert } from "@/lib/email"
 import { and, eq, or } from "drizzle-orm"
 
 /**
@@ -313,4 +314,41 @@ async function handlePaymentFailed(data: {
     attempt: tx.retryCount + 1,
     final_attempt: suspend,
   })
+
+  if (subForWebhook && nextRetry) {
+    const portalUrl = subForWebhook.portalToken
+      ? portalUrlForToken(subForWebhook.portalToken)
+      : undefined
+    try {
+      await sendDunningEmail({
+        to: subForWebhook.email,
+        customerName: subForWebhook.name,
+        planName: subForWebhook.planName,
+        amountKobo: tx.amount,
+        retryDate: nextRetry,
+        portalUrl,
+      })
+    } catch (e) {
+      console.error("[nomba-webhook] dunning email failed:", e)
+    }
+  }
+
+  const [m] = await db
+    .select()
+    .from(merchant)
+    .where(eq(merchant.userId, tx.userId))
+    .limit(1)
+
+  if (m?.alertEmail?.trim()) {
+    try {
+      await sendMerchantAlert({
+        to: m.alertEmail,
+        subject: `Charge failed — ${tx.customerName}`,
+        body: `${tx.customerName}: ${reason}`,
+        slackWebhookUrl: m.slackWebhookUrl || undefined,
+      })
+    } catch (e) {
+      console.error("[nomba-webhook] merchant alert failed:", e)
+    }
+  }
 }

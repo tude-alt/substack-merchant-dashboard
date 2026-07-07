@@ -7,7 +7,7 @@ import type { Metadata } from "next"
 
 type PageProps = {
   params: Promise<{ plan_id: string }>
-  searchParams: Promise<{ email?: string; name?: string; phone?: string }>
+  searchParams: Promise<{ email?: string; name?: string; phone?: string; coupon?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -40,7 +40,12 @@ export default async function HostedCheckoutPage({ params, searchParams }: PageP
     <div className="min-h-screen bg-mesh">
       <header className="border-b border-border/60 px-6 py-4">
         <div className="mx-auto flex max-w-md items-center justify-center">
-          <Logo />
+          {plan.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={plan.logoUrl} alt={plan.businessName} className="h-8 max-w-[160px] object-contain" />
+          ) : (
+            <Logo />
+          )}
         </div>
       </header>
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-md flex-col justify-center px-4 py-10">
@@ -50,9 +55,11 @@ export default async function HostedCheckoutPage({ params, searchParams }: PageP
           amountLabel={formatNaira(plan.amount)}
           interval={plan.interval}
           businessName={plan.businessName}
+          brandColor={plan.brandColor || "#4f46e5"}
           defaultName={query.name ?? ""}
           defaultEmail={query.email ?? ""}
           defaultPhone={query.phone ?? ""}
+          defaultCoupon={query.coupon ?? ""}
         />
       </div>
     </div>

@@ -10,6 +10,7 @@ import {
   listPlansForUser,
   type PlanInput,
 } from "@/lib/plans"
+import { updatePlanForUser } from "@/lib/plans-update"
 
 export type { PlanInput } from "@/lib/plans"
 
@@ -45,4 +46,11 @@ export async function createPlan(input: PlanInput) {
   const created = await createPlanForUser(userId, input)
   revalidatePath("/dashboard/plans")
   return { id: created.id, name: created.name }
+}
+
+export async function updatePlan(planId: number, input: PlanInput) {
+  const userId = await getUserId()
+  await updatePlanForUser(userId, planId, input)
+  revalidatePath("/dashboard/plans")
+  return { ok: true as const }
 }

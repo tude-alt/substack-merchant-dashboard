@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
-import { getMerchant } from "@/app/actions/merchant"
+import { getAppUrl } from "@/lib/billing"
 import { SetupWizard } from "@/components/setup-wizard"
 import { Logo } from "@/components/logo"
 
@@ -37,6 +37,7 @@ export default async function OnboardingPage() {
         <SetupWizard
           initialBusinessName={merchant.businessName}
           initialCategory={merchant.category}
+          nombaWebhookUrl={`${getAppUrl()}/api/webhooks/nomba`}
         />
       </div>
     </main>

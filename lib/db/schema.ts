@@ -79,6 +79,11 @@ export const merchant = pgTable("merchant", {
   webhookUrl: text("webhookUrl").notNull().default(""),
   webhookEvents: text("webhookEvents").notNull().default(""),
   webhookSecret: text("webhookSecret").notNull().default(""),
+  alertEmail: text("alertEmail").notNull().default(""),
+  slackWebhookUrl: text("slackWebhookUrl").notNull().default(""),
+  logoUrl: text("logoUrl").notNull().default(""),
+  brandColor: text("brandColor").notNull().default("#4f46e5"),
+  nombaWebhookAcknowledged: boolean("nombaWebhookAcknowledged").notNull().default(false),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
@@ -116,6 +121,7 @@ export const subscriber = pgTable("subscriber", {
   // orderReference of the initial tokenizing checkout order, used to correlate the webhook.
   initOrderReference: text("initOrderReference"),
   checkoutLink: text("checkoutLink"),
+  portalToken: text("portalToken"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
@@ -185,3 +191,14 @@ export const planMetricSnapshot = pgTable(
   },
   (t) => [unique().on(t.userId, t.planId, t.snapshotDate)],
 )
+
+export const coupon = pgTable("coupon", {
+  id: serial("id").primaryKey(),
+  userId: text("userId").notNull(),
+  code: text("code").notNull(),
+  planId: integer("planId"),
+  percentOff: integer("percentOff").notNull().default(0),
+  amountOff: bigint("amountOff", { mode: "number" }).notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})

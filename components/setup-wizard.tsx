@@ -15,6 +15,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { MERCHANT_CATEGORIES } from "@/lib/merchant-categories"
 import { runSetupFromWizard } from "@/app/actions/setup"
+import { acknowledgeNombaWebhook } from "@/app/actions/merchant"
 import type { MerchantSetupResult } from "@/lib/merchant-setup"
 import {
   AlertCircle,

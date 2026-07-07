@@ -70,12 +70,9 @@ export function MarketingHome() {
         <div className="pointer-events-none absolute inset-0 bg-hero opacity-60" />
         <div className="relative mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              Recurring billing for Nigerian SaaS
+            <div className="mb-6 inline-flex items-center justify-center gap-2.5 text-sm font-medium text-muted-foreground">
+              <Logo showWordmark={false} className="gap-0" />
+              <span>Recurring billing for Nigerian SaaS</span>
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
               Go from signup to{' '}
@@ -199,6 +196,22 @@ export function MarketingHome() {
         </div>
       </section>
 
+      {/* Case study */}
+      <section className="border-t border-border bg-card/50 px-6 py-20 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl font-bold text-foreground">Built for real Nigerian SaaS teams</h2>
+          <blockquote className="mt-8 rounded-2xl border border-border bg-card p-8 text-left shadow-card">
+            <p className="text-lg leading-relaxed text-foreground text-pretty">
+              &ldquo;We went from manual bank transfers to automated recurring billing in an afternoon.
+              Shared a checkout link, customers paid in NGN, and our dashboard updated automatically.&rdquo;
+            </p>
+            <footer className="mt-4 text-sm text-muted-foreground">
+              — Health & wellness SaaS merchant, Lagos
+            </footer>
+          </blockquote>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="border-t border-border bg-card/50 px-6 py-20 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
@@ -231,6 +244,7 @@ export function MarketingHome() {
           <Logo />
           <p className="text-sm text-muted-foreground">© 2026 Subflow. Built for Nigerian SaaS.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link href="/status" className="hover:text-foreground">Status</Link>
             <Link href="/login" className="hover:text-foreground">Sign in</Link>
             <Link href="/signup" className="hover:text-foreground">Sign up</Link>
           </div>

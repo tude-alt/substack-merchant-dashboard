@@ -20,9 +20,11 @@ type Props = {
   amountLabel: string
   interval: string
   businessName: string
+  brandColor: string
   defaultName: string
   defaultEmail: string
   defaultPhone: string
+  defaultCoupon?: string
 }
 
 export function HostedCheckoutForm({
@@ -31,13 +33,16 @@ export function HostedCheckoutForm({
   amountLabel,
   interval,
   businessName,
+  brandColor,
   defaultName,
   defaultEmail,
   defaultPhone,
+  defaultCoupon = "",
 }: Props) {
   const [name, setName] = useState(defaultName)
   const [email, setEmail] = useState(defaultEmail)
   const [phone, setPhone] = useState(defaultPhone)
+  const [coupon, setCoupon] = useState(defaultCoupon)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -45,7 +50,7 @@ export function HostedCheckoutForm({
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const result = await submitHostedCheckout(planId, { name, email, phone })
+      const result = await submitHostedCheckout(planId, { name, email, phone, coupon })
       if (!result.ok) {
         setError(result.error)
         return
@@ -57,7 +62,10 @@ export function HostedCheckoutForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elevated">
-        <div className="bg-gradient-to-br from-primary to-indigo-500 px-6 py-5 text-white">
+        <div
+          className="bg-gradient-to-br px-6 py-5 text-white"
+          style={{ background: `linear-gradient(to bottom right, ${brandColor}, ${brandColor}dd)` }}
+        >
           <p className="text-sm font-medium text-indigo-100">
             {businessName || "Subflow merchant"}
           </p>
@@ -136,6 +144,17 @@ export function HostedCheckoutForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="h-11 bg-background"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="checkout-coupon">Coupon (optional)</Label>
+          <Input
+            id="checkout-coupon"
+            name="coupon"
+            placeholder="LAUNCH20"
+            value={coupon}
+            onChange={(e) => setCoupon(e.target.value)}
+            className="h-11 bg-background uppercase"
           />
         </div>
         <Button type="submit" className="h-12 w-full text-base" size="lg" disabled={isPending}>

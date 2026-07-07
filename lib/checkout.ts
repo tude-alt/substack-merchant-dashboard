@@ -14,6 +14,8 @@ export type HostedCheckoutPlan = {
   interval: string
   successRedirectUrl: string
   businessName: string
+  logoUrl: string
+  brandColor: string
 }
 
 export async function getHostedCheckoutPlan(
@@ -29,6 +31,8 @@ export async function getHostedCheckoutPlan(
       interval: plan.interval,
       successRedirectUrl: plan.successRedirectUrl,
       businessName: merchant.businessName,
+      logoUrl: merchant.logoUrl,
+      brandColor: merchant.brandColor,
     })
     .from(plan)
     .innerJoin(merchant, eq(merchant.userId, plan.userId))
