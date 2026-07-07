@@ -52,6 +52,7 @@ export function MarketingHome() {
           <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
             <a href="#product" className="transition hover:text-foreground">Product</a>
             <a href="#integrate" className="transition hover:text-foreground">Integrate</a>
+            <Link href="/examples" className="transition hover:text-foreground">Examples</Link>
             <a href="#pricing" className="transition hover:text-foreground">Pricing</a>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -245,6 +246,7 @@ export function MarketingHome() {
           <p className="text-sm text-muted-foreground">© 2026 Subflow. Built for Nigerian SaaS.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link href="/status" className="hover:text-foreground">Status</Link>
+            <Link href="/examples" className="hover:text-foreground">Examples</Link>
             <Link href="/login" className="hover:text-foreground">Sign in</Link>
             <Link href="/signup" className="hover:text-foreground">Sign up</Link>
           </div>

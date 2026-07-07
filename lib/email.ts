@@ -1,6 +1,14 @@
 import "server-only"
 
+import nodemailer from "nodemailer"
 import { getAppUrl } from "@/lib/billing"
+import {
+  getDefaultFromAddress,
+  isGmailConfigured,
+  passwordResetEmail,
+  verificationCodeEmail,
+  verificationLinkEmail,
+} from "@/lib/email-templates"
 
 export type SendEmailInput = {
   to: string
@@ -9,15 +17,37 @@ export type SendEmailInput = {
   text?: string
 }
 
-/** Send email via Resend when configured; otherwise log for development. */
-export async function sendEmail(input: SendEmailInput): Promise<{ sent: boolean; provider: string }> {
-  const apiKey = process.env.RESEND_API_KEY?.trim()
-  const from = process.env.RESEND_FROM?.trim() || "Subflow <billing@subflow.africa>"
+const DEFAULT_GMAIL_USER = "axiosbuild@gmail.com"
 
-  if (!apiKey) {
-    console.log(`[email] (dev) To: ${input.to}\nSubject: ${input.subject}\n${input.text ?? input.html}`)
-    return { sent: true, provider: "log" }
-  }
+function getGmailUser(): string {
+  return process.env.GMAIL_USER?.trim() || DEFAULT_GMAIL_USER
+}
+
+async function sendViaGmail(input: SendEmailInput): Promise<{ sent: boolean; provider: string }> {
+  const user = getGmailUser()
+  const pass = process.env.GMAIL_APP_PASSWORD?.trim()
+  if (!pass) return { sent: false, provider: "gmail" }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  })
+
+  await transporter.sendMail({
+    from: getDefaultFromAddress(),
+    to: input.to,
+    subject: input.subject,
+    html: input.html,
+    text: input.text,
+  })
+
+  return { sent: true, provider: "gmail" }
+}
+
+async function sendViaResend(input: SendEmailInput): Promise<{ sent: boolean; provider: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim()
+  const from = process.env.RESEND_FROM?.trim() || getDefaultFromAddress()
+  if (!apiKey) return { sent: false, provider: "resend" }
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -41,6 +71,80 @@ export async function sendEmail(input: SendEmailInput): Promise<{ sent: boolean;
   }
 
   return { sent: true, provider: "resend" }
+}
+
+/**
+ * Send email via Gmail (preferred), Resend, or console log in development.
+ * Default sender: Subflow &lt;axiosbuild@gmail.com&gt; when using Gmail.
+ */
+export async function sendEmail(input: SendEmailInput): Promise<{ sent: boolean; provider: string }> {
+  if (isGmailConfigured()) {
+    try {
+      return await sendViaGmail(input)
+    } catch (e) {
+      console.error("[email] Gmail send failed:", e)
+    }
+  }
+
+  const resend = await sendViaResend(input)
+  if (resend.sent) return resend
+
+  console.log(
+    `[email] (dev) From: ${getDefaultFromAddress()}\nTo: ${input.to}\nSubject: ${input.subject}\n${input.text ?? input.html}`,
+  )
+  return { sent: true, provider: "log" }
+}
+
+export async function sendVerificationCodeEmail(opts: {
+  to: string
+  otp: string
+  type: "sign-in" | "email-verification" | "forget-password" | "change-email"
+}) {
+  const purpose =
+    opts.type === "forget-password"
+      ? "reset your password"
+      : opts.type === "sign-in"
+        ? "sign in"
+        : "verify your email"
+
+  return sendEmail({
+    to: opts.to,
+    subject: `Your Subflow verification code: ${opts.otp}`,
+    html: verificationCodeEmail(opts.otp, purpose),
+    text: `Your Subflow verification code is ${opts.otp}. It expires in 5 minutes.`,
+  })
+}
+
+export async function sendVerificationLinkEmail(opts: { to: string; url: string }) {
+  return sendEmail({
+    to: opts.to,
+    subject: "Verify your Subflow email",
+    html: verificationLinkEmail(opts.url),
+    text: `Verify your email: ${opts.url}`,
+  })
+}
+
+export async function sendPasswordResetEmail(opts: { to: string; url: string }) {
+  return sendEmail({
+    to: opts.to,
+    subject: "Reset your Subflow password",
+    html: passwordResetEmail(opts.url),
+    text: `Reset your password: ${opts.url}`,
+  })
+}
+
+export async function sendWelcomeEmail(opts: { to: string; name: string }) {
+  const appUrl = getAppUrl()
+  return sendEmail({
+    to: opts.to,
+    subject: "Welcome to Subflow",
+    html: `
+      <p>Hi ${opts.name},</p>
+      <p>Your Subflow merchant account is ready. Create a plan, share a checkout link, and start collecting recurring payments in NGN.</p>
+      <p><a href="${appUrl}/onboarding">Complete setup</a> · <a href="${appUrl}/dashboard/docs/examples">View examples</a></p>
+    `,
+    text: `Welcome to Subflow. Complete setup at ${appUrl}/onboarding`,
+  })
 }
 
 export async function sendPaymentReceiptEmail(opts: {

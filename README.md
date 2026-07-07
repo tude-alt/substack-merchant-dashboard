@@ -102,6 +102,15 @@ NOMBA_ACCOUNT_ID=...       # Nomba parent accountId (sent in the accountId heade
 
 # Protects GET /api/cron/billing (scheduled charges + retries).
 CRON_SECRET=replace-with-a-long-random-secret
+
+# Gmail — sends verification codes, receipts, and alerts (default: axiosbuild@gmail.com)
+GMAIL_USER=axiosbuild@gmail.com
+GMAIL_APP_PASSWORD=your-google-app-password
+EMAIL_FROM_NAME=Subflow
+
+# Optional: Resend as fallback if Gmail is not configured
+# RESEND_API_KEY=re_...
+# RESEND_FROM=Subflow <billing@yourdomain.com>
 ```
 
 ### Database migration

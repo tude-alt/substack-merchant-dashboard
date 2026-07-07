@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { signIn, signUp } from "@/lib/auth-client"
+import { signIn, signUp, authClient } from "@/lib/auth-client"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,8 +19,50 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [otpStep, setOtpStep] = useState(false)
+  const [otp, setOtp] = useState("")
+  const [info, setInfo] = useState<string | null>(null)
 
   const isSignUp = mode === "sign-up"
+
+  async function verifyOtpAndContinue(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    try {
+      const { error: otpError } = await authClient.emailOtp.verifyEmail({ email, otp })
+      if (otpError) {
+        setError(otpError.message ?? "Invalid verification code.")
+        setLoading(false)
+        return
+      }
+      const { error: signInError } = await signIn.email({ email, password })
+      if (signInError) {
+        setError(signInError.message ?? "Could not sign in after verification.")
+        setLoading(false)
+        return
+      }
+      router.push("/onboarding")
+      router.refresh()
+    } catch {
+      setError("Verification failed. Please try again.")
+      setLoading(false)
+    }
+  }
+
+  async function resendCode() {
+    setError(null)
+    setInfo(null)
+    const { error: resendError } = await authClient.emailOtp.sendVerificationOtp({
+      email,
+      type: "email-verification",
+    })
+    if (resendError) {
+      setError(resendError.message ?? "Could not resend code.")
+      return
+    }
+    setInfo("A new verification code was sent to your email.")
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,9 +77,26 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           setLoading(false)
           return
         }
+        setInfo("We sent a 6-digit verification code to your email.")
+        setOtpStep(true)
+        setLoading(false)
+        return
       } else {
         const { error, data } = await signIn.email({ email, password })
         if (error) {
+          const needsVerify =
+            error.message?.toLowerCase().includes("verify") ||
+            error.message?.toLowerCase().includes("verification")
+          if (needsVerify) {
+            await authClient.emailOtp.sendVerificationOtp({
+              email,
+              type: "email-verification",
+            })
+            setInfo("Enter the verification code we sent to your email.")
+            setOtpStep(true)
+            setLoading(false)
+            return
+          }
           setError(error.message ?? "Invalid email or password.")
           setLoading(false)
           return
@@ -88,6 +147,42 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           </div>
         )}
 
+        {info && (
+          <div
+            role="status"
+            className="mb-6 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground"
+          >
+            {info}
+          </div>
+        )}
+
+        {otpStep ? (
+          <form onSubmit={verifyOtpAndContinue} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="otp">Verification code</Label>
+              <Input
+                id="otp"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="h-11 bg-background text-center font-mono text-lg tracking-widest"
+                maxLength={6}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the 6-digit code sent to <strong>{email}</strong>
+              </p>
+            </div>
+            <Button type="submit" className="h-11 w-full text-base" disabled={loading || otp.length < 6}>
+              {loading ? "Verifying…" : "Verify and continue"}
+            </Button>
+            <Button type="button" variant="ghost" className="w-full" onClick={resendCode}>
+              Resend code
+            </Button>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           {isSignUp && (
             <div className="space-y-2">
@@ -138,6 +233,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             {loading ? "Please wait…" : isSignUp ? "Create account" : "Sign in"}
           </Button>
         </form>
+        )}
       </div>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
