@@ -1,14 +1,15 @@
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { AuthForm } from "@/components/auth-form"
+import { AuthLayout } from "@/components/auth-layout"
 
 export default async function SignupPage() {
   const session = await getSession()
   if (session?.user) redirect("/dashboard")
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-12">
+    <AuthLayout>
       <AuthForm mode="sign-up" />
-    </main>
+    </AuthLayout>
   )
 }

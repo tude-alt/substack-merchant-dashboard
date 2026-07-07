@@ -5,26 +5,24 @@ export function SubflowMark({ className }: { className?: string }) {
     <svg
       viewBox="0 0 32 32"
       fill="none"
-      className={cn("h-7 w-7", className)}
+      className={cn("h-8 w-8", className)}
       aria-hidden="true"
     >
-      {/* Two overlapping rectangles suggesting stacked layers */}
-      <rect
-        x="4"
-        y="9"
-        width="17"
-        height="14"
-        rx="3"
-        className="fill-primary"
-        opacity="0.55"
-      />
-      <rect
-        x="11"
-        y="4"
-        width="17"
-        height="14"
-        rx="3"
-        className="fill-primary"
+      <defs>
+        <linearGradient id="subflow-grad" x1="4" y1="4" x2="28" y2="28">
+          <stop stopColor="#4338ca" />
+          <stop offset="1" stopColor="#818cf8" />
+        </linearGradient>
+      </defs>
+      <rect x="4" y="18" width="14" height="10" rx="3" fill="url(#subflow-grad)" opacity="0.35" />
+      <rect x="10" y="12" width="14" height="10" rx="3" fill="url(#subflow-grad)" opacity="0.6" />
+      <rect x="16" y="6" width="14" height="10" rx="3" fill="url(#subflow-grad)" />
+      <path
+        d="M8 24c4-2 8-2 12 0"
+        stroke="url(#subflow-grad)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.8"
       />
     </svg>
   )
@@ -33,15 +31,22 @@ export function SubflowMark({ className }: { className?: string }) {
 export function Logo({
   className,
   showWordmark = true,
+  variant = "default",
 }: {
   className?: string
   showWordmark?: boolean
+  variant?: "default" | "light"
 }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       <SubflowMark />
       {showWordmark && (
-        <span className="text-lg font-semibold tracking-tight text-foreground">
+        <span
+          className={cn(
+            "text-lg font-bold tracking-tight",
+            variant === "light" ? "text-white" : "text-foreground",
+          )}
+        >
           Subflow
         </span>
       )}

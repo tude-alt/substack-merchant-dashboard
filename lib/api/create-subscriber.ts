@@ -14,6 +14,8 @@ export type CreateSubscriberInput = {
   email: string
   phone: string
   planId: number
+  /** Nomba redirect after payment; defaults to merchant dashboard subscribers list. */
+  callbackUrl?: string
 }
 
 export type CreateSubscriberResult =
@@ -62,13 +64,15 @@ export async function createSubscriberForMerchant(
 
   const initOrderReference = `SUBFLOW-INIT-${crypto.randomUUID()}`
 
+  const callbackUrl = input.callbackUrl?.trim() || `${getAppUrl()}/dashboard/subscribers`
+
   const order = await createCheckoutOrder({
     amountKobo: p.amount,
     currency: p.currency,
     customerEmail: input.email,
     customerId: input.email,
     orderReference: initOrderReference,
-    callbackUrl: `${getAppUrl()}/dashboard/subscribers`,
+    callbackUrl,
   })
 
   const [created] = await db

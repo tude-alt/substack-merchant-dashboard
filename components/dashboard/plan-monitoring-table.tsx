@@ -14,11 +14,11 @@ export function PlanMonitoringTable({ rows }: { rows: PlanMonitoringRow[] }) {
   if (rows.length === 0) return null
 
   return (
-    <Card className="overflow-hidden">
-      <div className="border-b border-border px-5 py-4">
-        <h2 className="font-semibold text-foreground">Per-plan monitoring</h2>
+    <Card className="overflow-hidden border-border/80 shadow-card ring-0">
+      <div className="border-b border-border bg-muted/30 px-5 py-4">
+        <h2 className="font-bold text-foreground">Per-plan monitoring</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          MRR, churn, and failed charge rates by plan — updates automatically.
+          MRR, churn, and failed charge rates — updates automatically when you have subscribers.
         </p>
       </div>
       <div className="overflow-x-auto">

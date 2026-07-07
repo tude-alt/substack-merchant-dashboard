@@ -13,20 +13,25 @@ export default async function OnboardingPage() {
   if (merchant.onboardingComplete) redirect("/dashboard")
 
   return (
-    <main className="min-h-dvh bg-background">
-      <header className="flex h-16 items-center justify-center border-b border-border">
-        <Link href="/" className="hover:opacity-80 transition-opacity">
-          <Logo />
-        </Link>
+    <main className="min-h-dvh bg-mesh">
+      <header className="border-b border-border/60 glass">
+        <div className="mx-auto flex h-16 max-w-3xl items-center justify-center px-4">
+          <Link href="/" className="transition-opacity hover:opacity-80">
+            <Logo />
+          </Link>
+        </div>
       </header>
-      <div className="mx-auto w-full max-w-xl space-y-8 px-4 py-10">
-        <div className="space-y-1 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
-            Set up Subflow in minutes
+      <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-10 lg:py-14">
+        <div className="space-y-2 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+            Quick setup
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground text-balance">
+            Let&apos;s get you ready to charge
           </h1>
-          <p className="text-sm text-muted-foreground text-pretty">
-            Answer a few questions — we&apos;ll create your plans, API keys, and monitoring
-            automatically.
+          <p className="text-muted-foreground text-pretty">
+            We&apos;ll create your plans, API keys, and monitoring — you&apos;ll have a checkout
+            link and code snippet when we&apos;re done.
           </p>
         </div>
         <SetupWizard

@@ -151,6 +151,8 @@ ALTER TABLE "webhook_delivery" ADD COLUMN IF NOT EXISTS "attempt" integer NOT NU
 ALTER TABLE "webhook_delivery" ADD COLUMN IF NOT EXISTS "error" text;
 ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "webhookSecret" text NOT NULL DEFAULT '';
 
+ALTER TABLE "plan" ADD COLUMN IF NOT EXISTS "successRedirectUrl" text NOT NULL DEFAULT '';
+
 CREATE TABLE IF NOT EXISTS "plan_metric_snapshot" (
   "id" serial PRIMARY KEY,
   "userId" text NOT NULL,

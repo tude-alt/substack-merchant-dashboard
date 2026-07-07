@@ -42,55 +42,53 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           setLoading(false)
           return
         }
-        // Ensure session is established before redirecting
         if (!data) {
           setError("Authentication failed. Please try again.")
           setLoading(false)
           return
         }
       }
-      // Use a small delay to ensure cookies are set, then redirect
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 500))
       router.push("/dashboard")
       router.refresh()
     } catch (err) {
-      console.error("[v0] Auth error:", err)
+      console.error("[auth] error:", err)
       setError("Something went wrong. Please try again.")
       setLoading(false)
     }
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <div className="mb-8 flex justify-center">
-        <Link href="/" className="hover:opacity-80 transition-opacity">
+    <div className="w-full max-w-md">
+      <div className="mb-8 flex justify-center lg:hidden">
+        <Link href="/" className="transition-opacity hover:opacity-80">
           <Logo />
         </Link>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-6 space-y-1.5 text-center">
-          <h1 className="text-xl font-semibold tracking-tight text-card-foreground">
-            {isSignUp ? "Create your merchant account" : "Sign in to Subflow"}
+      <div className="rounded-2xl border border-border bg-card p-8 shadow-elevated">
+        <div className="mb-8 space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {isSignUp ? "Create your account" : "Welcome back"}
           </h1>
           <p className="text-sm text-muted-foreground text-pretty">
             {isSignUp
-              ? "Start recurring billing for your Nigerian SaaS."
-              : "Nigerian SaaS recurring billing infrastructure."}
+              ? "Set up recurring billing in minutes — we'll create your plans for you."
+              : "Sign in to your merchant dashboard."}
           </p>
         </div>
 
         {error && (
           <div
             role="alert"
-            className="mb-4 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+            className="mb-6 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {isSignUp && (
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
@@ -98,16 +96,17 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
                 id="name"
                 type="text"
                 autoComplete="name"
-                placeholder="Ada Lovelace"
+                placeholder="Ada Obi"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-11 bg-background"
                 required
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Work email</Label>
             <Input
               id="email"
               type="email"
@@ -115,6 +114,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
               placeholder="you@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="h-11 bg-background"
               required
             />
           </div>
@@ -125,20 +125,17 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
               id="password"
               type="password"
               autoComplete={isSignUp ? "new-password" : "current-password"}
-              placeholder="••••••••"
+              placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="h-11 bg-background"
               minLength={8}
               required
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading
-              ? "Please wait…"
-              : isSignUp
-                ? "Create account"
-                : "Sign in"}
+          <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
+            {loading ? "Please wait…" : isSignUp ? "Create account" : "Sign in"}
           </Button>
         </form>
       </div>
@@ -147,20 +144,14 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         {isSignUp ? (
           <>
             Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-primary hover:underline"
-            >
+            <Link href="/login" className="font-semibold text-primary hover:underline">
               Sign in
             </Link>
           </>
         ) : (
           <>
             New to Subflow?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-primary hover:underline"
-            >
+            <Link href="/signup" className="font-semibold text-primary hover:underline">
               Create an account
             </Link>
           </>

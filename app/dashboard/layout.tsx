@@ -2,11 +2,7 @@ import type React from "react"
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { getMerchant } from "@/app/actions/merchant"
-import {
-  Sidebar,
-  MobileTopBar,
-  BottomNav,
-} from "@/components/dashboard-nav"
+import { Sidebar, MobileTopBar, BottomNav } from "@/components/dashboard-nav"
 
 export default async function DashboardLayout({
   children,
@@ -26,8 +22,9 @@ export default async function DashboardLayout({
       <Sidebar merchantName={merchantName} email={session.user.email} />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopBar />
-        <main className="flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
-          {children}
+        <main className="relative flex-1 bg-dot-grid px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+          <div className="pointer-events-none absolute inset-0 bg-mesh opacity-50" />
+          <div className="relative mx-auto max-w-7xl">{children}</div>
         </main>
         <BottomNav />
       </div>

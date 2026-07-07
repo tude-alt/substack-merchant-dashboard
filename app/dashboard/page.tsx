@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="An overview of your recurring revenue and billing health."
+        description="Revenue, subscribers, and billing health at a glance."
       />
 
       <MonitoringAlerts alerts={data.monitoringAlerts} />
