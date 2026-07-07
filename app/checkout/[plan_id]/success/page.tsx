@@ -5,11 +5,13 @@ import { Logo } from "@/components/logo"
 import { confirmInitialPaymentByOrderReference } from "@/lib/confirm-payment"
 
 type PageProps = {
-  searchParams: Promise<{ ref?: string }>
+  searchParams: Promise<{ ref?: string; orderReference?: string }>
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
-  const { ref } = await searchParams
+  const query = await searchParams
+  // Nomba appends `orderReference` on redirect; we also set `ref` on the callback URL.
+  const orderRef = query.ref?.trim() || query.orderReference?.trim()
 
   let title = "Confirming your payment"
   let message =
