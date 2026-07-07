@@ -11,6 +11,7 @@ import {
 import { portalUrlForToken } from "@/lib/email"
 import { generatePortalToken } from "@/lib/portal"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
+import { notifySubscriptionCancelled, notifySubscriptionPaused } from "@/lib/merchant-notify"
 import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -136,6 +137,17 @@ export async function cancelSubscriber(subscriberId: number) {
     amount: 0,
   })
 
+  try {
+    await notifySubscriptionCancelled(userId, {
+      email: sub.email,
+      name: sub.name,
+      planName: sub.planName,
+      portalToken: sub.portalToken,
+    })
+  } catch (e) {
+    console.error("[subscribers] cancellation notifications failed:", e)
+  }
+
   revalidateSubscriberPaths()
   return { ok: true as const }
 }
@@ -155,6 +167,17 @@ export async function pauseSubscriber(subscriberId: number) {
     type: "access.suspended",
     message: `${sub.name} paused on ${sub.planName}`,
   })
+
+  try {
+    await notifySubscriptionPaused(userId, {
+      email: sub.email,
+      name: sub.name,
+      planName: sub.planName,
+      portalToken: sub.portalToken,
+    })
+  } catch (e) {
+    console.error("[subscribers] pause notifications failed:", e)
+  }
 
   revalidateSubscriberPaths()
   return { ok: true as const }

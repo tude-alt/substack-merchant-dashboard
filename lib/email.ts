@@ -3,11 +3,18 @@ import "server-only"
 import nodemailer from "nodemailer"
 import { getAppUrl } from "@/lib/billing"
 import {
+  checkoutInviteEmail,
+  dunningEmail,
   getDefaultFromAddress,
   isGmailConfigured,
+  onboardingCompleteEmail,
   passwordResetEmail,
+  paymentReceiptEmail,
+  subscriptionCancelledEmail,
+  subscriptionPausedEmail,
   verificationCodeEmail,
   verificationLinkEmail,
+  welcomeEmail,
 } from "@/lib/email-templates"
 
 export type SendEmailInput = {
@@ -79,7 +86,6 @@ async function sendViaResend(input: SendEmailInput): Promise<{ sent: boolean; pr
 
 /**
  * Send email via Gmail (preferred), Resend, or console log in development.
- * Default sender: Subflow &lt;axiosbuild@gmail.com&gt; when using Gmail.
  */
 export async function sendEmail(input: SendEmailInput): Promise<{ sent: boolean; provider: string }> {
   if (isGmailConfigured()) {
@@ -142,12 +148,48 @@ export async function sendWelcomeEmail(opts: { to: string; name: string }) {
   return sendEmail({
     to: opts.to,
     subject: "Welcome to Subflow",
-    html: `
-      <p>Hi ${opts.name},</p>
-      <p>Your Subflow merchant account is ready. Create a plan, share a checkout link, and start collecting recurring payments in NGN.</p>
-      <p><a href="${appUrl}/onboarding">Complete setup</a> · <a href="${appUrl}/dashboard/docs/examples">View examples</a></p>
-    `,
+    html: welcomeEmail(opts.name, `${appUrl}/onboarding`, `${appUrl}/dashboard/docs/examples`),
     text: `Welcome to Subflow. Complete setup at ${appUrl}/onboarding`,
+  })
+}
+
+export async function sendOnboardingCompleteEmail(opts: { to: string; name: string }) {
+  const appUrl = getAppUrl()
+  return sendEmail({
+    to: opts.to,
+    subject: "Your Subflow account is ready to charge",
+    html: onboardingCompleteEmail({
+      merchantName: opts.name,
+      dashboardUrl: `${appUrl}/dashboard`,
+      docsUrl: `${appUrl}/dashboard/docs`,
+    }),
+    text: `Setup complete. Open your dashboard: ${appUrl}/dashboard`,
+  })
+}
+
+export async function sendCheckoutInviteEmail(opts: {
+  to: string
+  customerName: string
+  planName: string
+  amountKobo: number
+  checkoutUrl: string
+  merchantName: string
+}) {
+  const amountNgn = (opts.amountKobo / 100).toLocaleString("en-NG", {
+    style: "currency",
+    currency: "NGN",
+  })
+  return sendEmail({
+    to: opts.to,
+    subject: `Complete your subscription — ${opts.planName}`,
+    html: checkoutInviteEmail({
+      customerName: opts.customerName,
+      planName: opts.planName,
+      amountNgn,
+      checkoutUrl: opts.checkoutUrl,
+      merchantName: opts.merchantName,
+    }),
+    text: `Subscribe to ${opts.planName} (${amountNgn}): ${opts.checkoutUrl}`,
   })
 }
 
@@ -160,26 +202,23 @@ export async function sendPaymentReceiptEmail(opts: {
   portalUrl?: string
   merchantName: string
 }) {
-  const amount = (opts.amountKobo / 100).toLocaleString("en-NG", {
+  const amountNgn = (opts.amountKobo / 100).toLocaleString("en-NG", {
     style: "currency",
     currency: "NGN",
   })
 
-  const portalBlock = opts.portalUrl
-    ? `<p><a href="${opts.portalUrl}">Manage your subscription</a></p>`
-    : ""
-
   return sendEmail({
     to: opts.to,
     subject: `Payment receipt — ${opts.planName}`,
-    html: `
-      <p>Hi ${opts.customerName},</p>
-      <p>Your payment of <strong>${amount}</strong> for <strong>${opts.planName}</strong> with ${opts.merchantName} was successful.</p>
-      <p>Reference: <code>${opts.nombaRef}</code></p>
-      ${portalBlock}
-      <p>Thank you for subscribing.</p>
-    `,
-    text: `Payment of ${amount} for ${opts.planName} succeeded. Ref: ${opts.nombaRef}.`,
+    html: paymentReceiptEmail({
+      customerName: opts.customerName,
+      planName: opts.planName,
+      amountNgn,
+      nombaRef: opts.nombaRef,
+      merchantName: opts.merchantName,
+      portalUrl: opts.portalUrl,
+    }),
+    text: `Payment of ${amountNgn} for ${opts.planName} succeeded. Ref: ${opts.nombaRef}.`,
   })
 }
 
@@ -188,10 +227,11 @@ export async function sendDunningEmail(opts: {
   customerName: string
   planName: string
   amountKobo: number
-  retryDate: Date
+  retryDate: Date | null
   portalUrl?: string
+  finalAttempt?: boolean
 }) {
-  const amount = (opts.amountKobo / 100).toLocaleString("en-NG", {
+  const amountNgn = (opts.amountKobo / 100).toLocaleString("en-NG", {
     style: "currency",
     currency: "NGN",
   })
@@ -199,13 +239,43 @@ export async function sendDunningEmail(opts: {
   return sendEmail({
     to: opts.to,
     subject: `Action needed — payment failed for ${opts.planName}`,
-    html: `
-      <p>Hi ${opts.customerName},</p>
-      <p>We couldn't process your recurring payment of <strong>${amount}</strong> for <strong>${opts.planName}</strong>.</p>
-      <p>We'll try again on <strong>${opts.retryDate.toDateString()}</strong>.</p>
-      ${opts.portalUrl ? `<p><a href="${opts.portalUrl}">Update your payment method</a></p>` : ""}
-    `,
-    text: `Payment of ${amount} for ${opts.planName} failed. Retry scheduled for ${opts.retryDate.toDateString()}.`,
+    html: dunningEmail({
+      customerName: opts.customerName,
+      planName: opts.planName,
+      amountNgn,
+      retryDate: opts.retryDate?.toDateString() ?? "soon",
+      portalUrl: opts.portalUrl,
+      finalAttempt: opts.finalAttempt,
+    }),
+    text: `Payment of ${amountNgn} for ${opts.planName} failed.`,
+  })
+}
+
+export async function sendSubscriptionCancelledEmail(opts: {
+  to: string
+  customerName: string
+  planName: string
+  merchantName: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Subscription cancelled — ${opts.planName}`,
+    html: subscriptionCancelledEmail(opts),
+    text: `Your subscription to ${opts.planName} with ${opts.merchantName} was cancelled.`,
+  })
+}
+
+export async function sendSubscriptionPausedEmail(opts: {
+  to: string
+  customerName: string
+  planName: string
+  merchantName: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Subscription paused — ${opts.planName}`,
+    html: subscriptionPausedEmail(opts),
+    text: `Your subscription to ${opts.planName} with ${opts.merchantName} was paused.`,
   })
 }
 
@@ -238,3 +308,6 @@ export async function sendMerchantAlert(opts: {
 export function portalUrlForToken(token: string): string {
   return `${getAppUrl()}/portal/${token}`
 }
+
+// Re-export for convenience
+export { isGmailConfigured, getDefaultFromAddress }

@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { activity, subscriber } from "@/lib/db/schema"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
+import { notifySubscriptionCancelled } from "@/lib/merchant-notify"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -32,6 +33,17 @@ export async function cancelSubscriberFromPortal(portalToken: string) {
     plan_id: sub.planId,
     amount: 0,
   })
+
+  try {
+    await notifySubscriptionCancelled(sub.userId, {
+      email: sub.email,
+      name: sub.name,
+      planName: sub.planName,
+      portalToken: sub.portalToken,
+    })
+  } catch (e) {
+    console.error("[portal] cancellation notifications failed:", e)
+  }
 
   revalidatePath(`/portal/${portalToken}`)
 }
