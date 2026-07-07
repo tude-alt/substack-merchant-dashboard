@@ -45,21 +45,21 @@ export function MarketingHome() {
     <div className="min-h-screen bg-mesh">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/60 glass">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
-          <Link href="/" className="transition-opacity hover:opacity-80">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+          <Link href="/" className="shrink-0 transition-opacity hover:opacity-80">
             <Logo />
           </Link>
-          <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
+          <div className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex lg:gap-8">
             <a href="#product" className="transition hover:text-foreground">Product</a>
             <a href="#integrate" className="transition hover:text-foreground">Integrate</a>
             <Link href="/examples" className="transition hover:text-foreground">Examples</Link>
             <a href="#pricing" className="transition hover:text-foreground">Pricing</a>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button variant="ghost" asChild className="hidden sm:inline-flex">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+            <Button variant="ghost" size="sm" asChild className="px-2 sm:px-3">
               <Link href="/login">Sign in</Link>
             </Button>
-            <Button asChild>
+            <Button size="sm" asChild className="sm:h-10 sm:px-4">
               <Link href="/signup">Get started</Link>
             </Button>
           </div>
@@ -67,7 +67,7 @@ export function MarketingHome() {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-6 pb-16 pt-16 lg:px-8 lg:pb-24 lg:pt-20">
+      <section className="relative overflow-hidden px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-16 lg:px-8 lg:pb-24 lg:pt-20">
         <div className="pointer-events-none absolute inset-0 bg-hero opacity-60" />
         <div className="relative mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
@@ -75,7 +75,7 @@ export function MarketingHome() {
               <Logo showWordmark={false} className="gap-0" />
               <span>Recurring billing for Nigerian SaaS</span>
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
               Go from signup to{' '}
               <span className="text-gradient">first charge</span> in one session
             </h1>
@@ -83,13 +83,13 @@ export function MarketingHome() {
               Plans, hosted checkout, subscriptions, retries, and webhooks — powered by Nomba.
               Share a link, paste a script tag, or call the API. Your customers pay in NGN.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button size="lg" asChild className="h-12 px-8 text-base shadow-elevated">
+            <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+              <Button size="lg" asChild className="h-11 w-full px-6 text-base shadow-elevated sm:h-12 sm:w-auto sm:px-8">
                 <Link href="/signup" className="gap-2">
                   Start free <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="h-12 px-8 text-base bg-card">
+              <Button size="lg" variant="outline" asChild className="h-11 w-full bg-card px-6 text-base sm:h-12 sm:w-auto sm:px-8">
                 <Link href="/login">Sign in to dashboard</Link>
               </Button>
             </div>
@@ -110,7 +110,7 @@ export function MarketingHome() {
       </section>
 
       {/* Integration tiers */}
-      <section id="integrate" className="border-y border-border bg-card/50 px-6 py-20 lg:px-8">
+      <section id="integrate" className="border-y border-border bg-card/50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto mb-14 max-w-2xl text-center">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
@@ -149,7 +149,7 @@ export function MarketingHome() {
       </section>
 
       {/* Features */}
-      <section className="px-6 py-20 lg:px-8">
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-center">
           <div>
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
@@ -198,7 +198,7 @@ export function MarketingHome() {
       </section>
 
       {/* Case study */}
-      <section className="border-t border-border bg-card/50 px-6 py-20 lg:px-8">
+      <section className="border-t border-border bg-card/50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-foreground">Built for real Nigerian SaaS teams</h2>
           <blockquote className="mt-8 rounded-2xl border border-border bg-card p-8 text-left shadow-card">
@@ -214,7 +214,7 @@ export function MarketingHome() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="border-t border-border bg-card/50 px-6 py-20 lg:px-8">
+      <section id="pricing" className="border-t border-border bg-card/50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl">Simple, honest pricing</h2>
           <p className="mt-4 text-muted-foreground">No setup fees. No monthly platform charge during early access.</p>
@@ -227,9 +227,9 @@ export function MarketingHome() {
       </section>
 
       {/* CTA */}
-      <section className="px-6 py-20 lg:px-8">
-        <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-indigo-500 px-8 py-14 text-center text-white shadow-elevated sm:px-16">
-          <h2 className="text-3xl font-bold sm:text-4xl">Ready to bill customers in NGN?</h2>
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-4xl overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-indigo-500 px-5 py-10 text-center text-white shadow-elevated sm:rounded-3xl sm:px-16 sm:py-14">
+          <h2 className="text-2xl font-bold sm:text-4xl">Ready to bill customers in NGN?</h2>
           <p className="mx-auto mt-4 max-w-lg text-indigo-100 text-pretty">
             Create your account, run the setup wizard, and share your first checkout link today.
           </p>
@@ -240,11 +240,11 @@ export function MarketingHome() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border px-6 py-12 lg:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 sm:flex-row">
+      <footer className="border-t border-border px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
           <Logo />
-          <p className="text-sm text-muted-foreground">© 2026 Subflow. Built for Nigerian SaaS.</p>
-          <div className="flex gap-6 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">© 2026 Subflow · Team Axios · Nomba Hackathon</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
             <Link href="/status" className="hover:text-foreground">Status</Link>
             <Link href="/examples" className="hover:text-foreground">Examples</Link>
             <Link href="/login" className="hover:text-foreground">Sign in</Link>

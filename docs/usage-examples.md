@@ -207,7 +207,7 @@ Use a [Google App Password](https://myaccount.google.com/apppasswords) (2FA requ
 |------|------|
 | Share checkout only | Plans → copy link |
 | Embed button | `embed.js` + `data-subflow-plan` |
-| Full API control | `/dashboard/docs` |
+| Full API control | `/dashboard/docs/api` |
 | Checkout guide | `/dashboard/docs/checkout` |
 | These examples | `/examples` or `/dashboard/docs/examples` |
 | System status | `/status` |

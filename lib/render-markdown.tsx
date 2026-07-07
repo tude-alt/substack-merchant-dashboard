@@ -6,18 +6,40 @@ export function renderMarkdown(md: string) {
   let inCode = false
   let codeLines: string[] = []
   let listItems: string[] = []
+  let listOrdered = false
   let key = 0
+
+  function renderInline(text: string) {
+    return text.split(/(`[^`]+`)/g).map((part, i) =>
+      part.startsWith("`") && part.endsWith("`") ? (
+        <code key={i} className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
+          {part.slice(1, -1)}
+        </code>
+      ) : (
+        part
+      ),
+    )
+  }
 
   function flushList() {
     if (listItems.length === 0) return
+    const ListTag = listOrdered ? "ol" : "ul"
     elements.push(
-      <ul key={key++} className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+      <ListTag
+        key={key++}
+        className={
+          listOrdered
+            ? "list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-muted-foreground"
+            : "list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-muted-foreground"
+        }
+      >
         {listItems.map((item, i) => (
-          <li key={i}>{item}</li>
+          <li key={i}>{renderInline(item)}</li>
         ))}
-      </ul>,
+      </ListTag>,
     )
     listItems = []
+    listOrdered = false
   }
 
   function flushCode() {
@@ -25,7 +47,7 @@ export function renderMarkdown(md: string) {
     elements.push(
       <pre
         key={key++}
-        className="overflow-x-auto rounded-lg border border-border bg-muted/40 p-4 font-mono text-xs text-foreground"
+        className="overflow-x-auto rounded-xl border border-border bg-muted/50 p-4 font-mono text-xs leading-relaxed text-foreground"
       >
         <code>{codeLines.join("\n")}</code>
       </pre>,
@@ -47,10 +69,15 @@ export function renderMarkdown(md: string) {
       codeLines.push(line)
       continue
     }
+    if (line.trim() === "---") {
+      flushList()
+      elements.push(<hr key={key++} className="my-6 border-border" />)
+      continue
+    }
     if (line.startsWith("# ")) {
       flushList()
       elements.push(
-        <h1 key={key++} className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 key={key++} className="text-2xl font-bold tracking-tight text-foreground">
           {line.slice(2)}
         </h1>,
       )
@@ -59,7 +86,7 @@ export function renderMarkdown(md: string) {
     if (line.startsWith("## ")) {
       flushList()
       elements.push(
-        <h2 key={key++} className="mt-8 text-lg font-semibold text-foreground">
+        <h2 key={key++} className="mt-10 border-b border-border/60 pb-2 text-lg font-semibold text-foreground first:mt-0">
           {line.slice(3)}
         </h2>,
       )
@@ -68,13 +95,21 @@ export function renderMarkdown(md: string) {
     if (line.startsWith("### ")) {
       flushList()
       elements.push(
-        <h3 key={key++} className="mt-6 text-base font-medium text-foreground">
+        <h3 key={key++} className="mt-6 text-base font-semibold text-foreground">
           {line.slice(4)}
         </h3>,
       )
       continue
     }
+    const orderedMatch = line.match(/^\d+\.\s+(.*)$/)
+    if (orderedMatch) {
+      if (listItems.length > 0 && !listOrdered) flushList()
+      listOrdered = true
+      listItems.push(orderedMatch[1])
+      continue
+    }
     if (line.startsWith("- ")) {
+      if (listItems.length > 0 && listOrdered) flushList()
       listItems.push(line.slice(2))
       continue
     }
@@ -83,18 +118,9 @@ export function renderMarkdown(md: string) {
       continue
     }
     flushList()
-    const withCode = line.split(/(`[^`]+`)/g).map((part, i) =>
-      part.startsWith("`") && part.endsWith("`") ? (
-        <code key={i} className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
-          {part.slice(1, -1)}
-        </code>
-      ) : (
-        part
-      ),
-    )
     elements.push(
       <p key={key++} className="text-sm leading-relaxed text-muted-foreground">
-        {withCode}
+        {renderInline(line)}
       </p>,
     )
   }

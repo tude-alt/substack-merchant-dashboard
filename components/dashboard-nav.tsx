@@ -16,17 +16,14 @@ import { signOut } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/subscribers", label: "Subscribers", icon: Users },
-  { href: "/dashboard/plans", label: "Plans", icon: Layers },
-  { href: "/dashboard/transactions", label: "Transactions", icon: Receipt },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/subscribers", label: "Subscribers", shortLabel: "Subs", icon: Users },
+  { href: "/dashboard/plans", label: "Plans", shortLabel: "Plans", icon: Layers },
+  { href: "/dashboard/transactions", label: "Transactions", shortLabel: "Txns", icon: Receipt },
+  { href: "/dashboard/settings", label: "Settings", shortLabel: "Settings", icon: Settings },
 ]
 
-const SECONDARY = [
-  { href: "/dashboard/docs/examples", label: "Examples", icon: BookOpen },
-  { href: "/dashboard/docs", label: "API docs", icon: BookOpen },
-]
+const SECONDARY = [{ href: "/dashboard/docs", label: "Guides", icon: BookOpen }]
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard"
@@ -142,24 +139,43 @@ export function Sidebar({
 
 export function MobileTopBar() {
   const pathname = usePathname()
+  const router = useRouter()
   const onDocs = pathname.startsWith("/dashboard/docs")
+
+  async function handleSignOut() {
+    await signOut()
+    router.push("/login")
+    router.refresh()
+  }
+
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-card/80 px-4 backdrop-blur-md md:hidden">
-      <Link href="/dashboard">
+    <header className="flex h-14 items-center justify-between gap-2 border-b border-border bg-card/80 px-4 backdrop-blur-md md:hidden">
+      <Link href="/dashboard" className="shrink-0">
         <Logo />
       </Link>
-      <Link
-        href="/dashboard/docs/checkout"
-        className={cn(
-          "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
-          onDocs
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-        )}
-      >
-        <BookOpen className="h-4 w-4" />
-        Guides
-      </Link>
+      <div className="flex items-center gap-1">
+        <Link
+          href="/dashboard/docs"
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+            onDocs
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+          )}
+        >
+          <BookOpen className="h-4 w-4" />
+          Guides
+        </Link>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
+      </div>
     </header>
   )
 }
@@ -181,7 +197,7 @@ export function BottomNav() {
             )}
           >
             <Icon className={cn("h-5 w-5", active && "stroke-[2.5px]")} />
-            {item.label}
+            <span className="max-w-[3.25rem] truncate sm:max-w-none">{item.shortLabel ?? item.label}</span>
           </Link>
         )
       })}
