@@ -85,7 +85,19 @@ export function HostedCheckoutForm({
         </div>
       )}
 
+      <div className="rounded-xl border border-border/80 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">How checkout works</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-4">
+          <li>Enter your details below — this does not charge you yet.</li>
+          <li>Continue to Nomba to pay securely with your card.</li>
+          <li>After payment, your subscription becomes active.</li>
+        </ol>
+      </div>
+
       <div className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Step 1 · Your details
+        </p>
         <div className="space-y-2">
           <Label htmlFor="checkout-name">Full name</Label>
           <Input
@@ -127,8 +139,11 @@ export function HostedCheckoutForm({
           />
         </div>
         <Button type="submit" className="h-12 w-full text-base" size="lg" disabled={isPending}>
-          {isPending ? "Processing…" : "Continue to payment"}
+          {isPending ? "Preparing secure payment…" : "Step 2 · Continue to payment"}
         </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          You&apos;ll be redirected to Nomba to complete payment. You are not charged on this page.
+        </p>
       </div>
 
       <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">

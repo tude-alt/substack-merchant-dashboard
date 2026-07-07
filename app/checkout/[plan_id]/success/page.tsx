@@ -11,9 +11,9 @@ type PageProps = {
 export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
   const { ref } = await searchParams
 
-  let title = "Payment received"
+  let title = "Confirming your payment"
   let message =
-    "We're confirming your payment with our payment provider. This usually takes a few seconds."
+    "Step 2 complete — we're verifying your card payment with Nomba. This usually takes a few seconds."
   let tone: "success" | "pending" | "neutral" = "pending"
   let Icon = Clock
 
@@ -21,9 +21,9 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
     const result = await confirmInitialPaymentByOrderReference(ref.trim())
     switch (result.status) {
       case "activated":
-        title = "You're subscribed!"
+        title = "Payment successful — you're subscribed!"
         message =
-          "Your first payment went through and your subscription is now active. You can close this page."
+          "Your card payment was confirmed and your subscription is now active. Your merchant's dashboard has been updated."
         tone = "success"
         Icon = CheckCircle2
         break

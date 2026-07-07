@@ -100,7 +100,7 @@ export async function confirmInitialPaymentByOrderReference(
     await db.insert(activity).values({
       userId: sub.userId,
       type: "charge.success",
-      message: `${sub.name} completed first payment for ${sub.planName} (${nombaTransactionId || orderReference})`,
+      message: `${sub.name} paid for ${sub.planName} — subscription now active (${nombaTransactionId || orderReference})`,
     })
 
     try {

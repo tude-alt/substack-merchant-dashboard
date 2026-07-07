@@ -42,6 +42,7 @@ export async function submitHostedCheckout(
     const result = await createSubscriberForMerchant({
       userId: ctx.planUserId,
       mode: "live",
+      channel: "checkout",
       name,
       email,
       phone,

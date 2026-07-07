@@ -17,6 +17,13 @@ const SUBSCRIBER_STATUS: Record<string, Tone> = {
   pending_payment: "warning",
 }
 
+const SUBSCRIBER_LABELS: Record<string, string> = {
+  pending_payment: "Awaiting payment",
+  active: "Active",
+  suspended: "Suspended",
+  cancelled: "Cancelled",
+}
+
 const CHARGE_STATUS: Record<string, Tone> = {
   successful: "success",
   success: "success",
@@ -34,6 +41,10 @@ export function StatusPill({
 }) {
   const map = kind === "charge" ? CHARGE_STATUS : SUBSCRIBER_STATUS
   const tone = map[status] ?? "muted"
+  const label =
+    kind === "subscriber"
+      ? (SUBSCRIBER_LABELS[status] ?? status.replace(/_/g, " "))
+      : status.replace(/_/g, " ")
   return (
     <span
       className={cn(
@@ -51,7 +62,7 @@ export function StatusPill({
           tone === "info" && "bg-primary",
         )}
       />
-      {status.replace(/_/g, " ")}
+      {label}
     </span>
   )
 }

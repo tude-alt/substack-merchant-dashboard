@@ -15,6 +15,8 @@ export type CreateSubscriberInput = {
   email: string
   phone: string
   planId: number
+  /** Where the signup originated — affects dashboard activity copy. */
+  channel?: "api" | "checkout"
   /** Nomba redirect after payment; defaults to merchant dashboard subscribers list. */
   callbackUrl?: string
 }
@@ -99,10 +101,15 @@ export async function createSubscriberForMerchant(
     throw new Error("Subscriber insert did not return a row.")
   }
 
+  const activityMessage =
+    input.channel === "checkout"
+      ? `${input.name} started checkout for ${p.name} — payment not completed yet`
+      : `${input.name} subscribed to ${p.name} via API (${input.mode} key) — awaiting first payment`
+
   await db.insert(activity).values({
     userId: input.userId,
     type: "subscription.created",
-    message: `${input.name} subscribed to ${p.name} via API (${input.mode} key) — awaiting first payment`,
+    message: activityMessage,
   })
 
   try {
