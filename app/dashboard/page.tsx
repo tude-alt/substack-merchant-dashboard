@@ -7,6 +7,7 @@ import { MonitoringAlerts } from "@/components/dashboard/monitoring-alerts"
 import { PlanMonitoringTable } from "@/components/dashboard/plan-monitoring-table"
 import { getDashboardData } from "@/app/actions/dashboard"
 import { getFailedPayments } from "@/app/actions/transactions"
+import { DashboardLiveRefresh } from "@/components/dashboard/dashboard-live-refresh"
 
 export default async function DashboardPage() {
   const [data, failed] = await Promise.all([
@@ -16,6 +17,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <DashboardLiveRefresh />
       <PageHeader
         title="Dashboard"
         description="Revenue, subscribers, and billing health at a glance."

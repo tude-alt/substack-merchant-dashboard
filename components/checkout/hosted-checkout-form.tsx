@@ -20,9 +20,11 @@ type Props = {
   amountLabel: string
   interval: string
   businessName: string
+  brandColor: string
   defaultName: string
   defaultEmail: string
   defaultPhone: string
+  defaultCoupon?: string
 }
 
 export function HostedCheckoutForm({
@@ -31,13 +33,16 @@ export function HostedCheckoutForm({
   amountLabel,
   interval,
   businessName,
+  brandColor,
   defaultName,
   defaultEmail,
   defaultPhone,
+  defaultCoupon = "",
 }: Props) {
   const [name, setName] = useState(defaultName)
   const [email, setEmail] = useState(defaultEmail)
   const [phone, setPhone] = useState(defaultPhone)
+  const [coupon, setCoupon] = useState(defaultCoupon)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -45,7 +50,7 @@ export function HostedCheckoutForm({
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const result = await submitHostedCheckout(planId, { name, email, phone })
+      const result = await submitHostedCheckout(planId, { name, email, phone, coupon })
       if (!result.ok) {
         setError(result.error)
         return
@@ -57,7 +62,10 @@ export function HostedCheckoutForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-elevated">
-        <div className="bg-gradient-to-br from-primary to-indigo-500 px-6 py-5 text-white">
+        <div
+          className="bg-gradient-to-br px-6 py-5 text-white"
+          style={{ background: `linear-gradient(to bottom right, ${brandColor}, ${brandColor}dd)` }}
+        >
           <p className="text-sm font-medium text-indigo-100">
             {businessName || "Subflow merchant"}
           </p>
@@ -85,7 +93,19 @@ export function HostedCheckoutForm({
         </div>
       )}
 
+      <div className="rounded-xl border border-border/80 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">How checkout works</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-4">
+          <li>Enter your details below — this does not charge you yet.</li>
+          <li>Continue to Nomba to pay securely with your card.</li>
+          <li>After payment, your subscription becomes active.</li>
+        </ol>
+      </div>
+
       <div className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Step 1 · Your details
+        </p>
         <div className="space-y-2">
           <Label htmlFor="checkout-name">Full name</Label>
           <Input
@@ -126,9 +146,23 @@ export function HostedCheckoutForm({
             className="h-11 bg-background"
           />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="checkout-coupon">Coupon (optional)</Label>
+          <Input
+            id="checkout-coupon"
+            name="coupon"
+            placeholder="LAUNCH20"
+            value={coupon}
+            onChange={(e) => setCoupon(e.target.value)}
+            className="h-11 bg-background uppercase"
+          />
+        </div>
         <Button type="submit" className="h-12 w-full text-base" size="lg" disabled={isPending}>
-          {isPending ? "Processing…" : "Continue to payment"}
+          {isPending ? "Preparing secure payment…" : "Step 2 · Continue to payment"}
         </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          You&apos;ll be redirected to Nomba to complete payment. You are not charged on this page.
+        </p>
       </div>
 
       <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">

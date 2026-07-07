@@ -19,7 +19,7 @@ export type CheckoutSubmitResult =
 
 export async function submitHostedCheckout(
   planId: number,
-  fields: { name: string; email: string; phone: string },
+  fields: { name: string; email: string; phone: string; coupon?: string },
 ): Promise<CheckoutSubmitResult> {
   const name = fields.name.trim()
   const email = fields.email.trim().toLowerCase()
@@ -42,11 +42,13 @@ export async function submitHostedCheckout(
     const result = await createSubscriberForMerchant({
       userId: ctx.planUserId,
       mode: "live",
+      channel: "checkout",
       name,
       email,
       phone,
       planId,
       callbackUrl: successRedirect,
+      couponCode: fields.coupon,
     })
 
     const { data } = buildSubscriberCreateResponse(

@@ -23,7 +23,10 @@ const NAV = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
-const SECONDARY = [{ href: "/dashboard/docs", label: "API docs", icon: BookOpen }]
+const SECONDARY = [
+  { href: "/dashboard/docs/examples", label: "Examples", icon: BookOpen },
+  { href: "/dashboard/docs", label: "API docs", icon: BookOpen },
+]
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard"

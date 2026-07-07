@@ -17,6 +17,10 @@ import {
   getSubscriberHistory,
   chargeSubscriberNow,
   verifySubscriberPayment,
+  cancelSubscriber,
+  pauseSubscriber,
+  getCheckoutLinkForSubscriber,
+  getPortalLinkForSubscriber,
 } from "@/app/actions/subscribers"
 import {
   ChevronDown,
@@ -25,6 +29,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  Copy,
   RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -119,6 +124,43 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
   const [banner, setBanner] = useState<
     { kind: "success" | "error"; text: string } | null
   >(null)
+
+  function copyLink(fetcher: () => Promise<{ ok: boolean; url?: string; error?: string }>, label: string) {
+    startTransition(async () => {
+      const res = await fetcher()
+      if (res.ok && res.url) {
+        await navigator.clipboard.writeText(res.url)
+        setBanner({ kind: "success", text: `${label} copied to clipboard.` })
+      } else {
+        setBanner({ kind: "error", text: res.error ?? `Could not get ${label}.` })
+      }
+    })
+  }
+
+  function cancelSub(s: Subscriber) {
+    if (!confirm(`Cancel subscription for ${s.name}?`)) return
+    setBanner(null)
+    startTransition(async () => {
+      const res = await cancelSubscriber(s.id)
+      setBanner(
+        res.ok
+          ? { kind: "success", text: `${s.name} cancelled.` }
+          : { kind: "error", text: res.error ?? "Cancel failed." },
+      )
+    })
+  }
+
+  function pauseSub(s: Subscriber) {
+    setBanner(null)
+    startTransition(async () => {
+      const res = await pauseSubscriber(s.id)
+      setBanner(
+        res.ok
+          ? { kind: "success", text: `${s.name} paused.` }
+          : { kind: "error", text: res.error ?? "Pause failed." },
+      )
+    })
+  }
 
   function verifyPayment(s: Subscriber) {
     setBanner(null)
@@ -327,6 +369,66 @@ export function SubscribersTable({ subscribers }: { subscribers: Subscriber[] })
                               {verifyingId === s.id
                                 ? "Checking Nomba…"
                                 : "Verify payment"}
+                            </Button>
+                          )}
+                          {s.status === "pending_payment" && s.checkoutLink && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1.5"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                copyLink(
+                                  () => getCheckoutLinkForSubscriber(s.id),
+                                  "Checkout link",
+                                )
+                              }}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              Resend checkout link
+                            </Button>
+                          )}
+                          {s.status !== "cancelled" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1.5"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                copyLink(
+                                  () => getPortalLinkForSubscriber(s.id),
+                                  "Customer portal link",
+                                )
+                              }}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              Portal link
+                            </Button>
+                          )}
+                          {s.status === "active" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1.5"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                pauseSub(s)
+                              }}
+                            >
+                              Pause
+                            </Button>
+                          )}
+                          {s.status !== "cancelled" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1.5 text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                cancelSub(s)
+                              }}
+                            >
+                              Cancel
                             </Button>
                           )}
                           {s.status === "pending_payment" && s.checkoutLink && (

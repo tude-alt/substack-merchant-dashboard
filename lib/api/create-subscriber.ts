@@ -3,6 +3,8 @@ import { db } from "@/lib/db"
 import { activity, plan, subscriber } from "@/lib/db/schema"
 import { getAppUrl } from "@/lib/billing"
 import { appendOrderReferenceToCallbackUrl } from "@/lib/confirm-payment"
+import { validateCoupon } from "@/lib/coupons"
+import { generatePortalToken } from "@/lib/portal"
 import { createCheckoutOrder, NombaApiError, NombaConfigError } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { formatSubscriberCreated } from "@/lib/api/subscribers"
@@ -15,8 +17,11 @@ export type CreateSubscriberInput = {
   email: string
   phone: string
   planId: number
+  /** Where the signup originated — affects dashboard activity copy. */
+  channel?: "api" | "checkout"
   /** Nomba redirect after payment; defaults to merchant dashboard subscribers list. */
   callbackUrl?: string
+  couponCode?: string
 }
 
 export type CreateSubscriberResult =
@@ -64,12 +69,26 @@ export async function createSubscriberForMerchant(
   }
 
   const initOrderReference = `SUBFLOW-INIT-${crypto.randomUUID()}`
+  const portalToken = generatePortalToken()
+
+  let chargeAmountKobo = p.amount
+  if (input.couponCode?.trim()) {
+    const couponResult = await validateCoupon(
+      input.userId,
+      input.couponCode,
+      p.id,
+      p.amount,
+    )
+    if (couponResult.valid) {
+      chargeAmountKobo = couponResult.discountedAmount
+    }
+  }
 
   const callbackBase = input.callbackUrl?.trim() || `${getAppUrl()}/dashboard/subscribers`
   const callbackUrl = appendOrderReferenceToCallbackUrl(callbackBase, initOrderReference)
 
   const order = await createCheckoutOrder({
-    amountKobo: p.amount,
+    amountKobo: chargeAmountKobo,
     currency: p.currency,
     customerEmail: input.email,
     customerId: input.email,
@@ -91,6 +110,7 @@ export async function createSubscriberForMerchant(
       mrr: 0,
       initOrderReference,
       checkoutLink: order.checkoutLink,
+      portalToken,
       billingDate: new Date(),
     })
     .returning()
@@ -99,10 +119,15 @@ export async function createSubscriberForMerchant(
     throw new Error("Subscriber insert did not return a row.")
   }
 
+  const activityMessage =
+    input.channel === "checkout"
+      ? `${input.name} started checkout for ${p.name} — payment not completed yet`
+      : `${input.name} subscribed to ${p.name} via API (${input.mode} key) — awaiting first payment`
+
   await db.insert(activity).values({
     userId: input.userId,
     type: "subscription.created",
-    message: `${input.name} subscribed to ${p.name} via API (${input.mode} key) — awaiting first payment`,
+    message: activityMessage,
   })
 
   try {

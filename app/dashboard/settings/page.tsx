@@ -3,6 +3,7 @@ import { getPlansWithStats } from "@/app/actions/plans"
 import { getWebhookDeliveries } from "@/app/actions/webhooks"
 import { PageHeader } from "@/components/page-header"
 import { IntegrationsSection } from "@/components/settings/integrations-section"
+import { ProductFeaturesSection } from "@/components/settings/product-features-section"
 import { getAppUrl } from "@/lib/billing"
 
 export default async function SettingsPage() {
@@ -36,6 +37,12 @@ export default async function SettingsPage() {
           interval: p.interval,
         }))}
         deliveries={deliveries}
+      />
+      <ProductFeaturesSection
+        logoUrl={merchant.logoUrl ?? ""}
+        brandColor={merchant.brandColor ?? "#4f46e5"}
+        alertEmail={merchant.alertEmail ?? ""}
+        slackWebhookUrl={merchant.slackWebhookUrl ?? ""}
       />
     </div>
   )

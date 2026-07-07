@@ -141,3 +141,43 @@ export async function regenerateWebhookSecret() {
   revalidatePath("/dashboard/settings")
   return secret
 }
+
+export async function saveBranding(input: { logoUrl: string; brandColor: string }) {
+  const userId = await getUserId()
+  await getMerchant()
+  await db
+    .update(merchant)
+    .set({
+      logoUrl: input.logoUrl.trim(),
+      brandColor: input.brandColor.trim() || "#4f46e5",
+    })
+    .where(eq(merchant.userId, userId))
+  revalidatePath("/dashboard/settings")
+  revalidatePath("/checkout")
+}
+
+export async function saveAlertSettings(input: {
+  alertEmail: string
+  slackWebhookUrl: string
+}) {
+  const userId = await getUserId()
+  await getMerchant()
+  await db
+    .update(merchant)
+    .set({
+      alertEmail: input.alertEmail.trim(),
+      slackWebhookUrl: input.slackWebhookUrl.trim(),
+    })
+    .where(eq(merchant.userId, userId))
+  revalidatePath("/dashboard/settings")
+}
+
+export async function acknowledgeNombaWebhook() {
+  const userId = await getUserId()
+  await db
+    .update(merchant)
+    .set({ nombaWebhookAcknowledged: true })
+    .where(eq(merchant.userId, userId))
+  revalidatePath("/onboarding")
+  revalidatePath("/dashboard/settings")
+}

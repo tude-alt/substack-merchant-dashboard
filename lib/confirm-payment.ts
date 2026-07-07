@@ -1,8 +1,9 @@
 import "server-only"
 
 import { db } from "@/lib/db"
-import { activity, plan, subscriber, transaction } from "@/lib/db/schema"
+import { activity, merchant, plan, subscriber, transaction } from "@/lib/db/schema"
 import { getAppUrl, monthlyMrrKobo, nextBillingDate } from "@/lib/billing"
+import { portalUrlForToken, sendMerchantAlert, sendPaymentReceiptEmail } from "@/lib/email"
 import { verifyTransaction } from "@/lib/nomba"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { and, eq } from "drizzle-orm"
@@ -100,7 +101,7 @@ export async function confirmInitialPaymentByOrderReference(
     await db.insert(activity).values({
       userId: sub.userId,
       type: "charge.success",
-      message: `${sub.name} completed first payment for ${sub.planName} (${nombaTransactionId || orderReference})`,
+      message: `${sub.name} paid for ${sub.planName} — subscription now active (${nombaTransactionId || orderReference})`,
     })
 
     try {
@@ -112,6 +113,40 @@ export async function confirmInitialPaymentByOrderReference(
       })
     } catch (e) {
       console.error("[confirm-payment] merchant webhook dispatch failed:", e)
+    }
+
+    const [m] = await db
+      .select()
+      .from(merchant)
+      .where(eq(merchant.userId, sub.userId))
+      .limit(1)
+
+    const portalUrl = sub.portalToken ? portalUrlForToken(sub.portalToken) : undefined
+    try {
+      await sendPaymentReceiptEmail({
+        to: sub.email,
+        customerName: sub.name,
+        planName: sub.planName,
+        amountKobo: amount,
+        nombaRef: nombaTransactionId || orderReference,
+        portalUrl,
+        merchantName: m?.businessName || "your merchant",
+      })
+    } catch (e) {
+      console.error("[confirm-payment] receipt email failed:", e)
+    }
+
+    if (m?.alertEmail?.trim()) {
+      try {
+        await sendMerchantAlert({
+          to: m.alertEmail,
+          subject: `New payment — ${sub.name}`,
+          body: `${sub.name} paid for ${sub.planName}. MRR updated.`,
+          slackWebhookUrl: m.slackWebhookUrl || undefined,
+        })
+      } catch (e) {
+        console.error("[confirm-payment] merchant alert failed:", e)
+      }
     }
   }
 

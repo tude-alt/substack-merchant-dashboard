@@ -193,6 +193,25 @@ ALTER TABLE "subscriber" ALTER COLUMN "status" SET DEFAULT 'pending_payment';
 ALTER TABLE "subscriber" ALTER COLUMN "lastChargeResult" SET DEFAULT 'none';
 ALTER TABLE "transaction" ALTER COLUMN "status" SET DEFAULT 'pending';
 ALTER TABLE "webhook_delivery" ALTER COLUMN "statusCode" SET DEFAULT 0;
+
+-- Product recommendations: branding, alerts, portal, coupons ---------------
+ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "alertEmail" text NOT NULL DEFAULT '';
+ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "slackWebhookUrl" text NOT NULL DEFAULT '';
+ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "logoUrl" text NOT NULL DEFAULT '';
+ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "brandColor" text NOT NULL DEFAULT '#4f46e5';
+ALTER TABLE "merchant" ADD COLUMN IF NOT EXISTS "nombaWebhookAcknowledged" boolean NOT NULL DEFAULT false;
+ALTER TABLE "subscriber" ADD COLUMN IF NOT EXISTS "portalToken" text;
+
+CREATE TABLE IF NOT EXISTS "coupon" (
+  "id" serial PRIMARY KEY,
+  "userId" text NOT NULL,
+  "code" text NOT NULL,
+  "planId" integer,
+  "percentOff" integer NOT NULL DEFAULT 0,
+  "amountOff" bigint NOT NULL DEFAULT 0,
+  "active" boolean NOT NULL DEFAULT true,
+  "createdAt" timestamp NOT NULL DEFAULT now()
+);
 `
 
 const pool = new Pool({ connectionString: DATABASE_URL })

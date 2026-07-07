@@ -28,7 +28,7 @@ import {
   regenerateWebhookSecret,
   saveWebhookConfig,
 } from "@/app/actions/merchant"
-import { sendTestWebhook } from "@/app/actions/webhooks"
+import { replayWebhookDelivery, sendTestWebhook } from "@/app/actions/webhooks"
 import { formatDateTime, formatNaira } from "@/lib/format"
 import {
   PlugZap,
@@ -369,6 +369,7 @@ export function IntegrationsSection({
                   <TableHead>Attempt</TableHead>
                   <TableHead className="text-right">Response</TableHead>
                   <TableHead>Time</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -413,6 +414,30 @@ export function IntegrationsSection({
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-muted-foreground">
                         {formatDateTime(d.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() =>
+                            startSave(async () => {
+                              const res = await replayWebhookDelivery(d.id)
+                              setBanner(
+                                res.ok
+                                  ? {
+                                      kind: "success",
+                                      text: `Replayed — endpoint responded ${res.statusCode}.`,
+                                    }
+                                  : { kind: "error", text: res.error },
+                              )
+                              router.refresh()
+                            })
+                          }
+                        >
+                          Replay
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))

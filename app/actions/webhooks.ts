@@ -60,3 +60,40 @@ export async function sendTestWebhook(): Promise<TestWebhookResult> {
     error: formatted.error,
   }
 }
+
+export async function replayWebhookDelivery(deliveryId: number) {
+  const userId = await getUserId()
+  const [row] = await db
+    .select()
+    .from(webhookDelivery)
+    .where(eq(webhookDelivery.id, deliveryId))
+    .limit(1)
+
+  if (!row || row.userId !== userId) {
+    return { ok: false as const, error: "Delivery not found." }
+  }
+
+  const result = await dispatchMerchantWebhook(
+    userId,
+    row.event as "test.ping",
+    {
+      subscriber_id: null,
+      email: "",
+      plan_id: null,
+      amount: 0,
+      message: `Replay of delivery #${row.id}`,
+    },
+    { bypassSubscriptionFilter: true },
+  )
+
+  revalidatePath("/dashboard/settings")
+  const formatted = formatWebhookTestResult(result)
+  if (!formatted.ok && "error" in formatted) {
+    return { ok: false as const, error: formatted.error }
+  }
+  return {
+    ok: true as const,
+    delivered: formatted.delivered,
+    statusCode: formatted.status_code,
+  }
+}

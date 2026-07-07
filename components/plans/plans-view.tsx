@@ -28,8 +28,9 @@ import {
 } from "@/components/plan-form-fields"
 import { PageHeader } from "@/components/page-header"
 import { createPlan } from "@/app/actions/plans"
+import { updatePlan } from "@/app/actions/plans"
 import { formatNaira } from "@/lib/format"
-import { Plus, Layers, Users, AlertCircle, Copy, Check } from "lucide-react"
+import { Plus, Layers, Users, AlertCircle, Copy, Check, Pencil } from "lucide-react"
 
 type PlanCard = {
   id: number
@@ -77,7 +78,48 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
   const [form, setForm] = useState<PlanFormState>(emptyPlanForm)
   const [error, setError] = useState<string | null>(null)
   const [createdPlanId, setCreatedPlanId] = useState<number | null>(null)
+  const [editingPlan, setEditingPlan] = useState<PlanCard | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  function submitEdit() {
+    if (!editingPlan || !form.name.trim() || !form.amount) {
+      setError("Please provide a plan name and amount.")
+      return
+    }
+    setError(null)
+    startTransition(async () => {
+      await updatePlan(editingPlan.id, {
+        name: form.name.trim(),
+        description: form.description.trim(),
+        amount: Number(form.amount),
+        currency: form.currency,
+        interval: form.interval,
+        trialDays: Number(form.trialDays) || 0,
+        retryAttempts: Number(form.retryAttempts) || 0,
+        retryIntervalDays: Number(form.retryIntervalDays) || 1,
+        successRedirectUrl: form.successRedirectUrl.trim(),
+      })
+      setEditingPlan(null)
+      setForm(emptyPlanForm)
+      router.refresh()
+    })
+  }
+
+  function openEdit(p: PlanCard) {
+    setEditingPlan(p)
+    setForm({
+      name: p.name,
+      description: p.description,
+      amount: String(p.amount / 100),
+      currency: "NGN",
+      interval: p.interval,
+      trialDays: "0",
+      retryAttempts: "3",
+      retryIntervalDays: "3",
+      successRedirectUrl: "",
+    })
+    setOpen(true)
+  }
 
   function submit() {
     if (!form.name.trim() || !form.amount) {
@@ -177,13 +219,18 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <p className="font-medium text-foreground">{p.name}</p>
-                            {p.description && (
-                              <p className="line-clamp-1 text-xs text-muted-foreground">
-                                {p.description}
-                              </p>
-                            )}
+                          <div className="flex items-center gap-1">
+                            <div>
+                              <p className="font-medium text-foreground">{p.name}</p>
+                              {p.description && (
+                                <p className="line-clamp-1 text-xs text-muted-foreground">
+                                  {p.description}
+                                </p>
+                              )}
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(p)} aria-label="Edit plan">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -280,12 +327,14 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
         )}
       </div>
 
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingPlan(null) }}>
         <SheetContent className="flex w-full flex-col sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>Create a new plan</SheetTitle>
+            <SheetTitle>{editingPlan ? "Edit plan" : "Create a new plan"}</SheetTitle>
             <SheetDescription>
-              Define pricing, billing interval, and retry behaviour. The plan ID is shown after creation.
+              {editingPlan
+                ? "Update pricing, billing interval, and retry behaviour."
+                : "Define pricing, billing interval, and retry behaviour. The plan ID is shown after creation."}
             </SheetDescription>
           </SheetHeader>
 
@@ -303,8 +352,8 @@ export function PlansView({ plans }: { plans: PlanCard[] }) {
           </div>
 
           <SheetFooter>
-            <Button onClick={submit} disabled={isPending} className="w-full">
-              {isPending ? "Creating…" : "Create plan"}
+            <Button onClick={editingPlan ? submitEdit : submit} disabled={isPending} className="w-full">
+              {isPending ? "Saving…" : editingPlan ? "Save changes" : "Create plan"}
             </Button>
           </SheetFooter>
         </SheetContent>
