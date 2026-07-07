@@ -6,7 +6,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signIn, signUp, authClient } from "@/lib/auth-client"
-import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -77,7 +76,29 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           setLoading(false)
           return
         }
-        setInfo("We sent a 6-digit verification code to your email.")
+
+        const sessionRes = await authClient.getSession()
+        if (sessionRes.data?.session) {
+          router.push("/onboarding")
+          router.refresh()
+          return
+        }
+
+        const { error: otpError } = await authClient.emailOtp.sendVerificationOtp({
+          email,
+          type: "email-verification",
+        })
+        if (otpError) {
+          setError(
+            otpError.message ??
+              "Account created but we could not send the verification email. Tap Resend code to try again.",
+          )
+          setOtpStep(true)
+          setLoading(false)
+          return
+        }
+
+        setInfo("We sent a 6-digit verification code to your email. Check spam if you don't see it.")
         setOtpStep(true)
         setLoading(false)
         return
@@ -119,13 +140,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   return (
     <div className="w-full max-w-md">
-      <div className="mb-8 flex justify-center lg:hidden">
-        <Link href="/" className="transition-opacity hover:opacity-80">
-          <Logo />
-        </Link>
-      </div>
-
-      <div className="rounded-2xl border border-border bg-card p-8 shadow-elevated">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-elevated sm:p-8">
         <div className="mb-8 space-y-2">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {isSignUp ? "Create your account" : "Welcome back"}

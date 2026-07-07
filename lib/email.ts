@@ -33,15 +33,19 @@ async function sendViaGmail(input: SendEmailInput): Promise<{ sent: boolean; pro
     auth: { user, pass },
   })
 
-  await transporter.sendMail({
-    from: getDefaultFromAddress(),
-    to: input.to,
-    subject: input.subject,
-    html: input.html,
-    text: input.text,
-  })
-
-  return { sent: true, provider: "gmail" }
+  try {
+    await transporter.sendMail({
+      from: getDefaultFromAddress(),
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      text: input.text,
+    })
+    return { sent: true, provider: "gmail" }
+  } catch (e) {
+    console.error("[email] Gmail send failed:", e)
+    return { sent: false, provider: "gmail" }
+  }
 }
 
 async function sendViaResend(input: SendEmailInput): Promise<{ sent: boolean; provider: string }> {

@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { Check } from "lucide-react"
 
@@ -38,7 +39,14 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Form panel */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-mesh px-6 py-12">
+      <div className="flex flex-1 flex-col items-center justify-center bg-mesh px-4 py-10 sm:px-6 sm:py-12">
+        <Link
+          href="/"
+          className="mb-8 transition-opacity hover:opacity-80 lg:hidden"
+          aria-label="Subflow home"
+        >
+          <Logo />
+        </Link>
         {children}
       </div>
     </div>

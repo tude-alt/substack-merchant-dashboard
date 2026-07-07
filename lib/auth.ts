@@ -31,7 +31,7 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      void sendVerificationLinkEmail({ to: user.email, url })
+      await sendVerificationLinkEmail({ to: user.email, url })
     },
     sendOnSignUp: isGmailConfigured(),
     sendOnSignIn: false,
@@ -42,7 +42,11 @@ export const auth = betterAuth({
       expiresIn: 300,
       sendVerificationOnSignUp: isGmailConfigured(),
       async sendVerificationOTP({ email, otp, type }) {
-        void sendVerificationCodeEmail({ to: email, otp, type })
+        const result = await sendVerificationCodeEmail({ to: email, otp, type })
+        if (!result.sent) {
+          console.error("[auth] verification OTP email was not delivered:", result.provider)
+          throw new Error("Could not send verification email. Please try again.")
+        }
       },
     }),
   ],
