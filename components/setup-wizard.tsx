@@ -15,7 +15,6 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { MERCHANT_CATEGORIES } from "@/lib/merchant-categories"
 import { runSetupFromWizard } from "@/app/actions/setup"
-import { acknowledgeNombaWebhook } from "@/app/actions/merchant"
 import type { MerchantSetupResult } from "@/lib/merchant-setup"
 import {
   AlertCircle,
@@ -46,9 +45,11 @@ const PRICING_PRESETS: Record<string, number[]> = {
 export function SetupWizard({
   initialBusinessName,
   initialCategory,
+  nombaWebhookUrl,
 }: {
   initialBusinessName: string
   initialCategory: string
+  nombaWebhookUrl: string
 }) {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -344,6 +345,24 @@ export function SetupWizard({
                 value={webhookUrl}
                 onChange={(e) => setWebhookUrl(e.target.value)}
               />
+            </div>
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
+              <p className="font-medium text-foreground">Register Nomba inbound webhook</p>
+              <p className="mt-1 text-muted-foreground">
+                Add this URL in your Nomba developer dashboard so payments sync to Subflow automatically:
+              </p>
+              <code className="mt-2 block truncate rounded bg-muted px-2 py-1 font-mono text-xs">
+                {nombaWebhookUrl}
+              </code>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => copyText("nomba", nombaWebhookUrl)}
+              >
+                {copied === "nomba" ? "Copied" : "Copy Nomba URL"}
+              </Button>
             </div>
             <div className="flex gap-3">
               <Button variant="secondary" onClick={() => setStep(3)} disabled={loading}>
