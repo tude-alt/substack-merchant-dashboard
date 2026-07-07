@@ -8,6 +8,7 @@ import {
   confirmInitialPaymentBySubscriberId,
   type ConfirmPaymentResult,
 } from "@/lib/confirm-payment"
+import { portalUrlForToken } from "@/lib/email"
 import { generatePortalToken } from "@/lib/portal"
 import { dispatchMerchantWebhook } from "@/lib/webhook-dispatch"
 import { and, desc, eq } from "drizzle-orm"

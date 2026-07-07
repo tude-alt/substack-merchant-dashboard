@@ -1,5 +1,3 @@
-import Link from "next/link"
-import { CheckCircle2, Clock, AlertCircle } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { confirmInitialPaymentByOrderReference } from "@/lib/confirm-payment"
 import { CheckoutSuccessClient } from "@/components/checkout/checkout-success-client"
